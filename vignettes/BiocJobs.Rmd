@@ -34,9 +34,10 @@ knitr::opts_chunk$set(
 
 # Why declare jobs?
 
-A large fraction of what Bioconductor packages do is *batch-shaped*: a
-well-defined analysis with file inputs, file outputs, and a handful of
-parameters. Today every workflow system that wants to offer such an analysis
+Much of what Bioconductor packages do is interactive and exploratory. Some
+of it, though, is *batch-shaped*: a well-defined analysis with file inputs,
+file outputs, and a handful of parameters. Today every workflow system that
+wants to offer such an analysis
 — Galaxy, Nextflow, CWL/WDL engines, cloud batch services — needs a
 **hand-written wrapper**, maintained by someone who is usually not the
 package author, drifting out of sync with the package at every release.

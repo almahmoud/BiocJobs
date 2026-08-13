@@ -34,8 +34,8 @@ don't add the directory.
 
 ## Why
 
-Bioconductor ships thousands of software packages. A large fraction of what
-they do is *batch-shaped*: a well-defined analysis with file inputs, file
+Much of what Bioconductor packages do is interactive and exploratory. But
+some of it is *batch-shaped*: a well-defined analysis with file inputs, file
 outputs, and a handful of parameters. Today, every workflow system that wants
 to offer such an analysis — Galaxy, Nextflow, CWL/WDL engines, cloud batch
 systems — needs a **hand-written wrapper**, maintained by someone who is
