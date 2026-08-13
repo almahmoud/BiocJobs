@@ -664,6 +664,6 @@ target costs, because they consume the same specifications.
 sessionInfo()
 ```
 
-[guide]: https://github.com/Bioconductor/BiocJobs/blob/devel/docs/developer-guide.md
-[deseq2]: https://github.com/Bioconductor/BiocJobs/tree/devel/examples/DESeq2
+[guide]: https://github.com/almahmoud/BiocJobs/blob/main/docs/developer-guide.md
+[deseq2]: https://github.com/almahmoud/BiocJobs/tree/main/examples/DESeq2
 [tes]: https://github.com/ga4gh/task-execution-schemas

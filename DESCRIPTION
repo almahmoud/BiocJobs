@@ -17,8 +17,8 @@ Description: A lightweight framework for Bioconductor package developers to
     building a cross-package job registry.
 License: Artistic-2.0
 Encoding: UTF-8
-URL: https://github.com/Bioconductor/BiocJobs
-BugReports: https://github.com/Bioconductor/BiocJobs/issues
+URL: https://github.com/almahmoud/BiocJobs
+BugReports: https://github.com/almahmoud/BiocJobs/issues
 Depends: R (>= 4.6.0)
 Imports:
     yaml,

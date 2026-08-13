@@ -6,5 +6,5 @@ bibentry(
     author   = person("Bioconductor Core Team"),
     year     = "2026",
     note     = paste("R package version", meta$Version),
-    url      = "https://github.com/Bioconductor/BiocJobs"
+    url      = "https://github.com/almahmoud/BiocJobs"
 )

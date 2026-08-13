@@ -143,7 +143,7 @@ Touch points for a new target `foo`:
 ## Bugs, and changes to the specification
 
 Open an issue at
-<https://github.com/Bioconductor/BiocJobs/issues>. For a bug, include the
+<https://github.com/almahmoud/BiocJobs/issues>. For a bug, include the
 job YAML (or a minimal version of it), the exact command, and the full
 error message; specification bugs are much easier to fix from the YAML
 than from a description.
