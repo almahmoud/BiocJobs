@@ -457,11 +457,49 @@ option types, one executor per job. On the roadmap:
 | [`.github/workflows/`](.github/workflows/) | CI: `R CMD check` + `BiocCheck`, plus artifact regeneration and schema validation |
 | [`examples/DESeq2/`](examples/DESeq2/) | the worked example: maintainer-authored files under `inst/biocjobs/`, generated artifacts under `generated/` and `exec/`, simulated data under `test-data/` |
 
-To try it:
+
+## Try the DESeq2 example
+
+BiocJobs requires R >= 4.6.0. BiocJobs requires R >= 4.6.0. The DESeq2 example also requires DESeq2 and its runtime dependencies. Install them if needed:
+
+```r
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install(c("DESeq2", "apeglm", "ashr"))
+```
+
+Clone the repository and run the following commands from the repository root:
 
 ```bash
+git clone https://github.com/almahmoud/BiocJobs.git
+cd BiocJobs
 R CMD INSTALL .
+```
+
+Validate the example:
+
+```bash
 Rscript -e 'BiocJobs::biocjobsCLI()' validate examples/DESeq2
+```
+
+Run it using the supplied test data:
+
+```bash
+Rscript -e 'BiocJobs::biocjobsCLI()' run examples/DESeq2 deseq2-differential-expression \
+    --counts examples/DESeq2/test-data/counts.tsv \
+    --coldata examples/DESeq2/test-data/coldata.tsv \
+    --design "~ condition" \
+    --contrast_factor condition \
+    --contrast_numerator treated \
+    --contrast_denominator control \
+    --alpha 0.05 \
+    --shrinkage apeglm
+```
+
+Generate execution artifacts:
+
+```bash
 Rscript -e 'BiocJobs::biocjobsCLI()' galaxy examples/DESeq2 deseq2-differential-expression
 Rscript -e 'BiocJobs::biocjobsCLI()' nextflow examples/DESeq2 deseq2-differential-expression
 Rscript -e 'BiocJobs::biocjobsCLI()' wdl examples/DESeq2 deseq2-differential-expression
