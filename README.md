@@ -460,7 +460,7 @@ option types, one executor per job. On the roadmap:
 
 ## Try the DESeq2 example
 
-BiocJobs requires R >= 4.6.0. BiocJobs requires R >= 4.6.0. The DESeq2 example also requires DESeq2 and its runtime dependencies. Install them if needed:
+BiocJobs requires R >= 4.6.0. The DESeq2 example also requires DESeq2 and its runtime dependencies. Install them if needed:
 
 ```r
 if (!requireNamespace("BiocManager", quietly = TRUE))
