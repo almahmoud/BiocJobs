@@ -246,7 +246,8 @@ WDL type system cannot express. The DESeq2 task passes `miniwdl check`.
 **HTCondor target.** Each job becomes an HTCondor submit description
 (`<job>.sub`) plus the executable script it runs (`<job>.sh`). Inputs become
 `transfer_input_files`, outputs `transfer_output_files`, resources the
-`request_*` knobs, and the container an image under the container universe.
+`request_*` knobs, and the container a `docker://` image reference under the
+container universe.
 HTCondor has no typed parameter surface, so this is a concrete submission
 rather than a typed template: declared defaults are written in, and a
 required option with no default becomes a `{{options.<name>}}` placeholder

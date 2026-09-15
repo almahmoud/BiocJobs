@@ -471,7 +471,9 @@ shell script it runs (`<job>.sh`, written beside it and marked executable).
 Declared inputs become `transfer_input_files`, outputs become
 `transfer_output_files`, `resources` become
 `request_cpus`/`request_memory`/`request_disk`, and the job's container
-becomes a `container_image` under the container universe.
+becomes a `container_image` under the container universe, with a
+`docker://` transport prefix so HTCondor resolves it from the registry
+rather than treating it as a path to a local image file.
 
 HTCondor has no typed parameter surface, so unlike the Galaxy tool or the WDL
 task this is a concrete submission rather than a reusable typed template. The

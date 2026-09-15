@@ -18,6 +18,19 @@
     paste0("'", v, "'")
 }
 
+## A bare "repo/image:tag" in container_image is read by HTCondor as a path
+## to an image file and transferred as an input, which both mangles the
+## reference and tries to ship it. A registry reference needs a transport
+## prefix; anything that already carries one, or is a path to an image file,
+## is left alone.
+.condorImage <- function(image) {
+    if (grepl("://", image, fixed = TRUE) ||
+        grepl("^[./]", image) ||
+        grepl("\\.sif$", image))
+        image
+    else paste0("docker://", image)
+}
+
 ## HTCondor request_memory / request_disk accept a bare number plus a unit.
 .condorSize <- function(gb) {
     gb <- as.numeric(gb)
@@ -128,7 +141,7 @@ htcondorSubmit <- function(job, image = NULL, file = NULL,
                 job$name),
         "",
         "universe                = container",
-        sprintf("container_image         = %s", image),
+        sprintf("container_image         = %s", .condorImage(image)),
         "",
         sprintf("executable              = %s", script_name),
         "",

@@ -127,7 +127,8 @@ test_that("a parameter named meta does not collide with the meta map", {
 test_that("htcondorSubmit renders a submit description", {
     text <- htcondorSubmit(toy_job(), image = "example/image:1")
     expect_match(text, "universe                = container", fixed = TRUE)
-    expect_match(text, "container_image         = example/image:1", fixed = TRUE)
+    expect_match(text, "container_image         = docker://example/image:1",
+                 fixed = TRUE)
     expect_match(text, "executable              = toy-normalize.sh", fixed = TRUE)
     expect_match(text, "transfer_input_files    = matrix.tsv", fixed = TRUE)
     expect_match(text, "transfer_output_files   = normalized.tsv", fixed = TRUE)
@@ -191,4 +192,20 @@ test_that("option values containing quotes cannot break the script", {
     ## The rendered script is valid bash.
     skip_if(Sys.which("bash") == "")
     expect_identical(system2("bash", c("-n", shQuote(sh))), 0L)
+})
+
+test_that("registry images get a transport prefix, paths do not", {
+    ## Without docker://, HTCondor reads the reference as a path to an image
+    ## file: it transfers it as an input and drops the registry prefix.
+    text <- htcondorSubmit(toy_job(), image = "bioconductor/foo:RELEASE_3_23")
+    expect_match(text,
+                 "container_image         = docker://bioconductor/foo:RELEASE_3_23",
+                 fixed = TRUE)
+    ## An explicit transport, an absolute path and a .sif file are left alone.
+    for (img in c("docker://x/y:1", "oras://x/y:1", "/images/y.sif",
+                  "./y.sif")) {
+        out <- htcondorSubmit(toy_job(), image = img)
+        expect_match(out, paste0("container_image         = ", img),
+                     fixed = TRUE)
+    }
 })
