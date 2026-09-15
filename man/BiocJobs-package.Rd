@@ -41,8 +41,8 @@ Key entry points:
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/Bioconductor/BiocJobs}
-  \item Report bugs at \url{https://github.com/Bioconductor/BiocJobs/issues}
+  \item \url{https://github.com/almahmoud/BiocJobs}
+  \item Report bugs at \url{https://github.com/almahmoud/BiocJobs/issues}
 }
 
 }

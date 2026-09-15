@@ -3,17 +3,17 @@
 // regenerate with: Rscript -e 'BiocJobs::biocjobsCLI()' nextflow <pkg> deseq2-differential-expression
 
 process DESEQ2_DIFFERENTIAL_EXPRESSION {
-    tag "deseq2-differential-expression"
-    container 'ghcr.io/almahmoud/deseq2:devel'
+    tag "${meta.id}"
+    container 'bioconductor/bioconductor_docker:RELEASE_3_23'
     cpus 1
     memory '4 GB'
     disk '10 GB'
 
     input:
-    // Raw count matrix (tsv)
-    path counts
-    // Sample table (tsv)
-    path coldata
+    // meta: map identifying the unit of work; meta.id names the tag
+    // counts: Raw count matrix (tsv)
+    // coldata: Sample table (tsv)
+    tuple val(meta), path(counts), path(coldata)
     // Design formula (string; default in spec: ~ condition)
     val design
     // Factor to test (string; required)
@@ -34,9 +34,9 @@ process DESEQ2_DIFFERENTIAL_EXPRESSION {
     val prefilter_min_samples
 
     output:
-    path 'results.tsv', emit: results
-    path 'normalized_counts.tsv', emit: normalized_counts
-    path 'ma_plot.pdf', emit: ma_plot
+    tuple val(meta), path('results.tsv'), emit: results
+    tuple val(meta), path('normalized_counts.tsv'), emit: normalized_counts
+    tuple val(meta), path('ma_plot.pdf'), emit: ma_plot
 
     script:
     """

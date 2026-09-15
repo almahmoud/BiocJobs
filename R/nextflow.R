@@ -1,8 +1,10 @@
 ## Nextflow target.
 ##
-## A job maps onto a DSL2 process in its own module file: declared inputs
-## become `path` inputs, options become `val` inputs, outputs are emitted
-## under stable names, and resources map to process directives.  The script
+## A job maps onto a DSL2 process in its own module file: declared file
+## inputs become a single nf-core style `tuple val(meta), path(...)` input,
+## options become `val` inputs, outputs are emitted under stable names
+## carrying `meta` through, and resources map to process directives.  The
+## script
 ## block runs the same self-locating `Rscript -e 'BiocJobs::execJob(...)'`
 ## command used by every other target, and a stub block makes the module
 ## testable with `nextflow run -stub` in environments without R.
@@ -23,7 +25,7 @@
                   "public", "return", "static", "strictfp", "super", "switch",
                   "synchronized", "this", "throw", "throws", "trait",
                   "transient", "true", "try", "val", "var", "void", "volatile",
-                  "while", "path", "tuple", "env", "stdin", "stdout")
+                  "while", "path", "tuple", "env", "stdin", "stdout", "meta")
 
 ## A Groovy-safe input variable name; the emitted --flag keeps the original.
 .nfVar <- function(name)
@@ -41,19 +43,27 @@
 
 #' Generate a Nextflow DSL2 module from a job
 #'
-#' Produces a self-contained Nextflow module file with one process.  File
-#' inputs become `path` inputs, options become `val` inputs (pass
-#' `params.<name>`-style values or channel values from the calling
-#' workflow), and each declared output is emitted under its declared name
-#' via `emit:`.
-#' A `stub` block is included so pipelines can be smoke-tested with
-#' `-stub-run`.
+#' Produces a self-contained Nextflow module file with one process.
+#' Options become `val` inputs (pass `params.<name>`-style values or channel
+#' values from the calling workflow), and a `stub` block is included so
+#' pipelines can be smoke-tested with `-stub-run`.
+#'
+#' By default the module follows the nf-core convention: the job's file
+#' inputs travel together in one `tuple val(meta), path(...)` input led by a
+#' `meta` map, every output is emitted as `tuple val(meta), path(...)` so
+#' that map flows on to the next process, and the process `tag` is
+#' `${meta.id}`.  Nextflow shows the tag of the most recently launched job
+#' for a process, so it has to identify the unit of work rather than repeat
+#' the process name.  Passing `meta = FALSE` emits plain `path` inputs and
+#' tags with the first input file's name instead, for pipelines that do not
+#' use meta maps.
 #'
 #' @param job A `BiocJob` object, or path to a job YAML file.
 #' @param image Container image; defaults to the job's `container` field,
 #'   then to the current Bioconductor docker image.
 #' @param file Optional path; when supplied the module text is written
 #'   there.
+#' @param meta Emit nf-core style `meta` maps (default `TRUE`).
 #' @return The module text as a character scalar, invisibly when `file` is
 #'   given.
 #' @examples
@@ -68,15 +78,24 @@
 #' cat(head(lines, 20), sep = "\n")
 #'
 #' ## Outputs are emitted under their declared names, so a calling
-#' ## workflow refers to them as TOY_NORMALIZE.out.normalized.
+#' ## workflow refers to them as TOY_NORMALIZE.out.normalized, and carry the
+#' ## meta map through to the next process.
 #' grep("emit:", lines, value = TRUE)
+#'
+#' ## The tag identifies the unit of work, not the process.
+#' grep("tag ", lines, value = TRUE)
+#'
+#' ## Pipelines that do not use meta maps can opt out.
+#' plain <- strsplit(nextflowModule(job, meta = FALSE), "\n", fixed = TRUE)[[1]]
+#' grep("tag |path matrix", plain, value = TRUE)
 #'
 #' ## Written straight into a pipeline's modules/ directory.
 #' path <- file.path(tempdir(), "toy_normalize.nf")
 #' nextflowModule(job, file = path)
 #' basename(path)
 #' @export
-nextflowModule <- function(job, image = NULL, file = NULL) {
+nextflowModule <- function(job, image = NULL, file = NULL,
+                           meta = TRUE) {
     if (is.character(job))
         job <- readJob(job)
     stopifnot(inherits(job, "BiocJob"))
@@ -104,13 +123,31 @@ nextflowModule <- function(job, image = NULL, file = NULL) {
         sprintf("// %s (%s)", .oneline(e$label %||% e$name), note)
     }
 
-    inputs <- unlist(lapply(job$inputs, function(e)
-        c(comment_for(e, "input"), sprintf("path %s", .nfVar(e$name)))))
+    ## nf-core convention: the file inputs of one analysis unit travel in a
+    ## single tuple led by a `meta` map, outputs carry that map back out, and
+    ## the tag names the sample rather than the process.
+    if (meta) {
+        in_comments <- c(
+            "// meta: map identifying the unit of work; meta.id names the tag",
+            vapply(job$inputs, function(e)
+                sprintf("// %s: %s (%s)", .nfVar(e$name),
+                        .oneline(e$label %||% e$name), e$format), ""))
+        tuple_parts <- c("val(meta)",
+                         vapply(job$inputs, function(e)
+                             sprintf("path(%s)", .nfVar(e$name)), ""))
+        inputs <- c(in_comments,
+                    paste0("tuple ", paste(tuple_parts, collapse = ", ")))
+        outputs <- vapply(job$outputs, function(e)
+            sprintf("tuple val(meta), path('%s'), emit: %s",
+                    out_file(e), e$name), "")
+    } else {
+        inputs <- unlist(lapply(job$inputs, function(e)
+            c(comment_for(e, "input"), sprintf("path %s", .nfVar(e$name)))))
+        outputs <- vapply(job$outputs, function(e)
+            sprintf("path '%s', emit: %s", out_file(e), e$name), "")
+    }
     options <- unlist(lapply(job$options, function(o)
         c(comment_for(o, "option"), sprintf("val %s", .nfVar(o$name)))))
-
-    outputs <- vapply(job$outputs, function(e)
-        sprintf("path '%s', emit: %s", out_file(e), e$name), "")
 
     ## Values are quoted with embedded single quotes escaped, so a path
     ## or option value containing a quote cannot break the shell.
@@ -126,8 +163,17 @@ nextflowModule <- function(job, image = NULL, file = NULL) {
     )
     script[length(script)] <- sub(" \\\\\\\\$", "", script[length(script)])
 
+    ## The tag identifies the unit of work in Nextflow's progress output, so
+    ## it must vary per sample, not per process.
+    tag <- if (meta) {
+        "${meta.id}"
+    } else if (length(job$inputs)) {
+        sprintf("${%s.name}", .nfVar(job$inputs[[1L]]$name))
+    } else {
+        job$name
+    }
     directives <- c(
-        sprintf("tag \"%s\"", job$name),
+        sprintf("tag \"%s\"", tag),
         sprintf("container '%s'", image),
         if (!is.null(job$resources$cpus))
             sprintf("cpus %d", as.integer(job$resources$cpus)),

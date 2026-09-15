@@ -406,22 +406,32 @@ bootstrap disappears.
 
 ### Nextflow
 
-A DSL2 module: one `process`, file inputs as `path`, options as `val`
-(annotated with types/defaults from the spec), outputs under stable
-`emit:` names, resource directives, and a `stub:` block so pipelines can
-be smoke-tested with `-stub-run` before touching real data. Use it like
-any module:
+A DSL2 module: one `process`, options as `val` (annotated with
+types/defaults from the spec), outputs under stable `emit:` names, resource
+directives, and a `stub:` block so pipelines can be smoke-tested with
+`-stub-run` before touching real data.
+
+By default the module follows the nf-core convention: all of the job's file
+inputs travel together in one `tuple val(meta), path(...)` input led by a
+`meta` map, each output is emitted as `tuple val(meta), path(...)` so the
+map flows on to the next process, and the process `tag` is `${meta.id}`.
+Nextflow displays the tag of the most recently launched job for a process,
+so it identifies the unit of work rather than repeating the process name.
+Use it like any module:
 
 ```nextflow
 include { MY_ANALYSIS } from './modules/my_analysis.nf'
 
 workflow {
-    MY_ANALYSIS(
-        channel.fromPath(params.input1),
-        'fast', 0.05)                     // options, in declared order
-    MY_ANALYSIS.out.output1.view()
+    ch = channel.of([ [id: 'sample1'], file(params.input1) ])
+    MY_ANALYSIS(ch, 'fast', 0.05)          // options, in declared order
+    MY_ANALYSIS.out.output1.view()         // [ [id:sample1], output1.tsv ]
 }
 ```
+
+Pipelines that do not use meta maps can opt out with
+`nextflowModule(job, meta = FALSE)`, which emits plain `path` inputs and
+tags with the first input file's name instead.
 
 The DESeq2 module passes `nextflow lint` with zero warnings and executes
 under `-stub-run` (verified with Nextflow 26.04, and the rendered script

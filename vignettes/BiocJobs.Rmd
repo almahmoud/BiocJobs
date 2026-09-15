@@ -433,14 +433,24 @@ in-module default, its spec default shown in a comment. Reordering options
 in a future spec version therefore changes the call signature — bump the
 job's `version:` when you do.
 
+Following the nf-core convention, the file inputs arrive together in a
+single `tuple val(meta), path(...)` input led by a `meta` map, the outputs
+carry that map back out, and the process `tag` is `${meta.id}` so Nextflow's
+progress output names the unit of work rather than the process:
+
 ```
 include { TOY_NORMALIZE } from './modules/toy_normalize.nf'
 
 workflow {
-    TOY_NORMALIZE(channel.fromPath(params.matrix), 'log2', false, 1.0)
-    TOY_NORMALIZE.out.normalized.view()
+    ch = channel.of([ [id: 'sample1'], file(params.matrix) ])
+    TOY_NORMALIZE(ch, 'log2', false, 1.0)
+    TOY_NORMALIZE.out.normalized.view()   // [ [id:sample1], normalized.tsv ]
 }
 ```
+
+Pass `meta = FALSE` to `nextflowModule()` for pipelines that do not use meta
+maps; the module then takes plain `path` inputs and tags with the first
+input file's name.
 
 ## WDL
 

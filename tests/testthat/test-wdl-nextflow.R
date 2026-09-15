@@ -37,10 +37,14 @@ test_that("nextflowModule renders a complete process", {
     text <- nextflowModule(toy_job(), image = "example/image:1")
     expect_match(text, "process TOY_NORMALIZE \\{")
     expect_match(text, "container 'example/image:1'", fixed = TRUE)
-    expect_match(text, "path matrix", fixed = TRUE)
+    ## nf-core style: file inputs in one meta-led tuple, outputs carry meta.
+    expect_match(text, "tuple val(meta), path(matrix)", fixed = TRUE)
     expect_match(text, "val method", fixed = TRUE)
-    expect_match(text, "path 'normalized.tsv', emit: normalized",
+    expect_match(text, "tuple val(meta), path('normalized.tsv'), emit: normalized",
                  fixed = TRUE)
+    ## The tag names the unit of work, not the process.
+    expect_match(text, "tag \"${meta.id}\"", fixed = TRUE)
+    expect_false(grepl("tag \"toy-normalize\"", text, fixed = TRUE))
     expect_match(text, "--matrix '${(matrix as String).replace(", fixed = TRUE)
     expect_match(text, "--normalized 'normalized.tsv'", fixed = TRUE)
     expect_match(text, "cpus 1", fixed = TRUE)
@@ -88,4 +92,32 @@ test_that("WDL escapes shell metacharacters and placeholder introducers", {
     expect_match(wdl, "u007E", fixed = TRUE)
     ## every String value on the command line is sub()-escaped.
     expect_match(wdl, "sub(note", fixed = TRUE)
+})
+
+test_that("meta = FALSE emits plain paths and tags the first input file", {
+    text <- nextflowModule(toy_job(), image = "x/y:1", meta = FALSE)
+    expect_match(text, "path matrix", fixed = TRUE)
+    expect_match(text, "path 'normalized.tsv', emit: normalized", fixed = TRUE)
+    expect_match(text, "tag \"${matrix.name}\"", fixed = TRUE)
+    expect_false(grepl("meta", text, fixed = TRUE))
+})
+
+test_that("a job with no file inputs still tags and declares meta", {
+    spec <- toy_spec_list()
+    spec$inputs <- list()
+    text <- nextflowModule(as_job(spec), image = "x/y:1")
+    expect_match(text, "tuple val(meta)", fixed = TRUE)
+    expect_match(text, "tag \"${meta.id}\"", fixed = TRUE)
+    ## Without meta there is no file to name, so fall back to the job name.
+    plain <- nextflowModule(as_job(spec), image = "x/y:1", meta = FALSE)
+    expect_match(plain, "tag \"toy-normalize\"", fixed = TRUE)
+})
+
+test_that("a parameter named meta does not collide with the meta map", {
+    spec <- toy_spec_list()
+    spec$options[[length(spec$options) + 1L]] <- list(
+        name = "meta", type = "string", default = "x", label = "Meta")
+    text <- nextflowModule(as_job(spec), image = "x/y:1")
+    expect_match(text, "val meta_", fixed = TRUE)   # mangled variable
+    expect_match(text, "--meta ", fixed = TRUE)     # flag stays literal
 })

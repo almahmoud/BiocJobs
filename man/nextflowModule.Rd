@@ -4,7 +4,7 @@
 \alias{nextflowModule}
 \title{Generate a Nextflow DSL2 module from a job}
 \usage{
-nextflowModule(job, image = NULL, file = NULL)
+nextflowModule(job, image = NULL, file = NULL, meta = TRUE)
 }
 \arguments{
 \item{job}{A \code{BiocJob} object, or path to a job YAML file.}
@@ -14,19 +14,29 @@ then to the current Bioconductor docker image.}
 
 \item{file}{Optional path; when supplied the module text is written
 there.}
+
+\item{meta}{Emit nf-core style \code{meta} maps (default \code{TRUE}).}
 }
 \value{
 The module text as a character scalar, invisibly when \code{file} is
 given.
 }
 \description{
-Produces a self-contained Nextflow module file with one process.  File
-inputs become \code{path} inputs, options become \code{val} inputs (pass
-\verb{params.<name>}-style values or channel values from the calling
-workflow), and each declared output is emitted under its declared name
-via \verb{emit:}.
-A \code{stub} block is included so pipelines can be smoke-tested with
-\code{-stub-run}.
+Produces a self-contained Nextflow module file with one process.
+Options become \code{val} inputs (pass \verb{params.<name>}-style values or channel
+values from the calling workflow), and a \code{stub} block is included so
+pipelines can be smoke-tested with \code{-stub-run}.
+}
+\details{
+By default the module follows the nf-core convention: the job's file
+inputs travel together in one \verb{tuple val(meta), path(...)} input led by a
+\code{meta} map, every output is emitted as \verb{tuple val(meta), path(...)} so
+that map flows on to the next process, and the process \code{tag} is
+\verb{$\{meta.id\}}.  Nextflow shows the tag of the most recently launched job
+for a process, so it has to identify the unit of work rather than repeat
+the process name.  Passing \code{meta = FALSE} emits plain \code{path} inputs and
+tags with the first input file's name instead, for pipelines that do not
+use meta maps.
 }
 \examples{
 toy <- system.file("examples", "toy", package = "BiocJobs")
@@ -40,8 +50,16 @@ lines <- strsplit(nf, "\n", fixed = TRUE)[[1]]
 cat(head(lines, 20), sep = "\n")
 
 ## Outputs are emitted under their declared names, so a calling
-## workflow refers to them as TOY_NORMALIZE.out.normalized.
+## workflow refers to them as TOY_NORMALIZE.out.normalized, and carry the
+## meta map through to the next process.
 grep("emit:", lines, value = TRUE)
+
+## The tag identifies the unit of work, not the process.
+grep("tag ", lines, value = TRUE)
+
+## Pipelines that do not use meta maps can opt out.
+plain <- strsplit(nextflowModule(job, meta = FALSE), "\n", fixed = TRUE)[[1]]
+grep("tag |path matrix", plain, value = TRUE)
 
 ## Written straight into a pipeline's modules/ directory.
 path <- file.path(tempdir(), "toy_normalize.nf")
