@@ -1,0 +1,157 @@
+##fileformat=VCFv4.2
+##FILTER=<ID=PASS,Description="All filters passed">
+##GLnexusVersion=v1.4.1-0-g68e25e5
+##GLnexusConfigName=DeepVariantWES
+##GLnexusConfigCRC32C=1063427682
+##GLnexusConfig={unifier_config: {drop_filtered: false, min_allele_copy_number: 1, min_AQ1: 35, min_AQ2: 20, min_GQ: 20, max_alleles_per_site: 32, monoallelic_sites_for_lost_alleles: true, preference: common}, genotyper_config: {revise_genotypes: true, min_assumed_allele_frequency: 9.99999975e-05, snv_prior_calibration: 0.375, indel_prior_calibration: 0.375, required_dp: 0, allow_partial_data: true, allele_dp_format: AD, ref_dp_format: MIN_DP, output_residuals: false, more_PL: true, squeeze: false, trim_uncalled_alleles: true, top_two_half_calls: false, output_format: BCF, liftover_fields: [{orig_names: [MIN_DP, DP], name: DP, description: "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Approximate read depth (reads with MQ=255 or with bad mates are filtered)\">", type: int, number: basic, default_type: missing, count: 1, combi_method: min, ignore_non_variants: true}, {orig_names: [AD], name: AD, description: "##FORMAT=<ID=AD,Number=R,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed\">", type: int, number: alleles, default_type: zero, count: 0, combi_method: min, ignore_non_variants: false}, {orig_names: [GQ], name: GQ, description: "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype Quality\">", type: int, number: basic, default_type: missing, count: 1, combi_method: min, ignore_non_variants: true}, {orig_names: [PL], name: PL, description: "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Phred-scaled genotype Likelihoods\">", type: int, number: genotype, default_type: missing, count: 0, combi_method: missing, ignore_non_variants: true}]}}
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency estimate for each alternate allele">
+##INFO=<ID=AQ,Number=A,Type=Integer,Description="Allele Quality score reflecting evidence for each alternate allele (Phred scale)">
+##INFO=<ID=AC,Number=A,Type=Integer,Description="Allele count in genotypes">
+##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+##FILTER=<ID=MONOALLELIC,Description="Site represents one ALT allele in a region with multiple variants that could not be unified into non-overlapping multi-allelic sites">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=RNC,Number=2,Type=Character,Description="Reason for No Call in GT: . = n/a, M = Missing data, P = Partial data, I = gVCF input site is non-called, D = insufficient Depth of coverage, - = unrepresentable overlapping deletion, L = Lost/unrepresentable allele (other than deletion), U = multiple Unphased variants present, O = multiple Overlapping variants present, 1 = site is Monoallelic, no assertion about presence of REF or ALT allele">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth (reads with MQ=255 or with bad mates are filtered)">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Phred-scaled genotype Likelihoods">
+##contig=<ID=1,length=249250621>
+##contig=<ID=10,length=135534747>
+##contig=<ID=11,length=135006516>
+##contig=<ID=12,length=133851895>
+##contig=<ID=13,length=115169878>
+##contig=<ID=14,length=107349540>
+##contig=<ID=15,length=102531392>
+##contig=<ID=16,length=90354753>
+##contig=<ID=17,length=81195210>
+##contig=<ID=18,length=78077248>
+##contig=<ID=19,length=59128983>
+##contig=<ID=2,length=243199373>
+##contig=<ID=20,length=63025520>
+##contig=<ID=21,length=48129895>
+##contig=<ID=22,length=51304566>
+##contig=<ID=3,length=198022430>
+##contig=<ID=4,length=191154276>
+##contig=<ID=5,length=180915260>
+##contig=<ID=6,length=171115067>
+##contig=<ID=7,length=159138663>
+##contig=<ID=8,length=146364022>
+##contig=<ID=9,length=141213431>
+##contig=<ID=MT,length=16569>
+##contig=<ID=X,length=155270560>
+##contig=<ID=Y,length=59373566>
+##contig=<ID=GL000192.1,length=547496>
+##contig=<ID=GL000225.1,length=211173>
+##contig=<ID=GL000194.1,length=191469>
+##contig=<ID=GL000193.1,length=189789>
+##contig=<ID=GL000200.1,length=187035>
+##contig=<ID=GL000222.1,length=186861>
+##contig=<ID=GL000212.1,length=186858>
+##contig=<ID=GL000195.1,length=182896>
+##contig=<ID=GL000223.1,length=180455>
+##contig=<ID=GL000224.1,length=179693>
+##contig=<ID=GL000219.1,length=179198>
+##contig=<ID=GL000205.1,length=174588>
+##contig=<ID=GL000215.1,length=172545>
+##contig=<ID=GL000216.1,length=172294>
+##contig=<ID=GL000217.1,length=172149>
+##contig=<ID=GL000199.1,length=169874>
+##contig=<ID=GL000211.1,length=166566>
+##contig=<ID=GL000213.1,length=164239>
+##contig=<ID=GL000220.1,length=161802>
+##contig=<ID=GL000218.1,length=161147>
+##contig=<ID=GL000209.1,length=159169>
+##contig=<ID=GL000221.1,length=155397>
+##contig=<ID=GL000214.1,length=137718>
+##contig=<ID=GL000228.1,length=129120>
+##contig=<ID=GL000227.1,length=128374>
+##contig=<ID=GL000191.1,length=106433>
+##contig=<ID=GL000208.1,length=92689>
+##contig=<ID=GL000198.1,length=90085>
+##contig=<ID=GL000204.1,length=81310>
+##contig=<ID=GL000233.1,length=45941>
+##contig=<ID=GL000237.1,length=45867>
+##contig=<ID=GL000230.1,length=43691>
+##contig=<ID=GL000242.1,length=43523>
+##contig=<ID=GL000243.1,length=43341>
+##contig=<ID=GL000241.1,length=42152>
+##contig=<ID=GL000236.1,length=41934>
+##contig=<ID=GL000240.1,length=41933>
+##contig=<ID=GL000206.1,length=41001>
+##contig=<ID=GL000232.1,length=40652>
+##contig=<ID=GL000234.1,length=40531>
+##contig=<ID=GL000202.1,length=40103>
+##contig=<ID=GL000238.1,length=39939>
+##contig=<ID=GL000244.1,length=39929>
+##contig=<ID=GL000248.1,length=39786>
+##contig=<ID=GL000196.1,length=38914>
+##contig=<ID=GL000249.1,length=38502>
+##contig=<ID=GL000246.1,length=38154>
+##contig=<ID=GL000203.1,length=37498>
+##contig=<ID=GL000197.1,length=37175>
+##contig=<ID=GL000245.1,length=36651>
+##contig=<ID=GL000247.1,length=36422>
+##contig=<ID=GL000201.1,length=36148>
+##contig=<ID=GL000235.1,length=34474>
+##contig=<ID=GL000239.1,length=33824>
+##contig=<ID=GL000210.1,length=27682>
+##contig=<ID=GL000231.1,length=27386>
+##contig=<ID=GL000229.1,length=19913>
+##contig=<ID=GL000226.1,length=15008>
+##contig=<ID=GL000207.1,length=4262>
+##bcftools_viewVersion=1.9+htslib-1.9
+##bcftools_viewCommand=view -O v -o testdata/Ashkenazim_GIAB_small.glnexus.vcf results/Ashkenazim_GIAB_small.glnexus.bcf; Date=Mon May 22 05:51:50 2023
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	HG002	HG003	HG004
+16	450140	16_450140_C_CAG	C	CAG	99	.	AF=0.5;AQ=99	GT:DP:AD:GQ:PL:RNC	0/1:265:152,110:99:99,0,84:..	1/1:179:1,177:42:47,43,0:..	0/0:16:16,0:48:0,207,2069:..
+16	450165	16_450165_T_C	T	C	72	.	AF=0.5;AQ=72	GT:DP:AD:GQ:PL:RNC	0/1:247:143,103:69:72,0,71:..	1/1:172:1,171:43:57,44,0:..	0/0:16:16,0:48:0,207,2069:..
+16	450309	16_450309_C_T	C	T	79	.	AF=0.333333;AQ=79	GT:DP:AD:GQ:PL:RNC	0/1:69:45,24:99:79,0,99:..	0/1:45:16,29:43:46,0,45:..	0/0:16:16,0:48:0,207,2069:..
+16	450759	16_450759_C_G	C	G	46	.	AF=0.333333;AQ=46	GT:DP:AD:GQ:PL:RNC	0/0:0:0,0:1:0,3,29:..	1/1:3:0,3:11:46,13,0:..	1/1:3:0,3:12:45,14,0:..
+16	453212	16_453212_G_GT	G	GT	61	.	AF=0.333333;AQ=61	GT:DP:AD:GQ:PL:RNC	1/1:2:0,2:20:61,22,0:..	0/0:0:0,0:1:0,0,0:..	1/1:4:0,4:7:35,9,0:..
+16	453214	16_453214_G_T	G	T	43	.	AF=0.333333;AQ=43	GT:DP:AD:GQ:PL:RNC	0/1:2:0,2:5:43,0,2:..	0/0:0:0,0:1:0,0,0:..	0/1:4:0,4:3:30,0,0:..
+16	453249	16_453249_A_G	A	G	52	.	AF=0.333333;AQ=52	GT:DP:AD:GQ:PL:RNC	0/1:2:0,2:11:52,0,10:..	0/0:0:0,0:1:0,0,0:..	1/1:3:0,3:8:42,10,0:..
+16	455497	16_455497_G_C	G	C	61	.	AF=0.333333;AQ=61	GT:DP:AD:GQ:PL:RNC	0/0:16:16,0:48:0,48,479:..	0/1:100:51,49:52:60,0,52:..	0/1:93:44,49:52:61,0,52:..
+16	455646	16_455646_A_G	A	G	67	.	AF=0.666667;AQ=67	GT:DP:AD:GQ:PL:RNC	1/1:142:2,140:61:67,62,0:..	0/1:147:71,75:42:57,0,42:..	0/1:136:77,58:35:51,0,35:..
+16	456239	16_456239_G_GC	G	GC	99	.	AF=1;AQ=99	GT:DP:AD:GQ:PL:RNC	1/1:82:0,82:99:99,99,0:..	1/1:64:1,62:69:82,69,0:..	1/1:67:1,65:66:99,66,0:..
+16	456291	16_456291_G_GC	G	GC	69	.	AF=1;AQ=69	GT:DP:AD:GQ:PL:RNC	1/1:169:2,167:62:69,62,0:..	1/1:133:0,133:52:67,52,0:..	1/1:152:1,151:44:67,44,0:..
+16	456429	16_456429_G_A	G	A	56	.	AF=0.333333;AQ=56	GT:DP:AD:GQ:PL:RNC	0/0:20:20,0:50:0,300,2999:..	0/1:106:51,53:41:56,0,40:..	0/1:142:71,71:38:51,0,37:..
+16	456483	16_456483_T_C	T	C	57	.	AF=0.333333;AQ=57	GT:DP:AD:GQ:PL:RNC	0/0:20:20,0:50:0,300,2999:..	0/1:50:22,28:56:57,0,61:..	0/1:72:35,37:54:55,0,59:..
+16	456701	16_456701_C_T	C	T	44	.	AF=0.333333;AQ=44	GT:DP:AD:GQ:PL:RNC	0/0:4:4,0:12:0,12,119:..	1/1:1:0,1:1:44,3,0:..	0/1:3:1,2:29:44,0,28:..
+16	457768	16_457768_G_C	G	C	65	.	AF=1;AQ=65	GT:DP:AD:GQ:PL:RNC	1/1:6:0,6:42:56,42,0:..	1/1:3:0,3:30:65,30,0:..	1/1:11:0,11:37:61,37,0:..
+16	457783	16_457783_CCTCTGTCTCCGGG_C	CCTCTGTCTCCGGG	C	61	.	AF=0.666667;AQ=61	GT:DP:AD:GQ:PL:RNC	1/1:6:4,2:15:61,16,0:..	1/1:2:1,1:27:32,28,0:..	1/1:6:0,6:44:53,45,0:..
+16	459422	16_459422_A_G	A	G	70	.	AF=0.333333;AQ=70	GT:DP:AD:GQ:PL:RNC	1/1:3:0,3:36:70,38,0:..	1/1:2:0,2:5:31,7,0:..	0/0:0:0,0:1:0,0,0:..
+16	460357	16_460357_AG_A;16_460358_G_T	AG	A,AT	43	.	AF=0.166667,0.166667;AQ=43,39	GT:DP:AD:GQ:PL:RNC	0/1:178:91,85,0:43:43,0,99,990,990,990:..	0/0:16:16,0,0:48:0,48,479,48,479,479:..	0/2:161:78,0,83:39:39,990,990,0,990,47:..
+16	460578	16_460578_CT_C	CT	C	57	.	AF=1;AQ=57	GT:DP:AD:GQ:PL:RNC	1/1:8:1,7:48:57,48,0:..	1/1:13:0,13:36:52,36,0:..	1/1:13:0,13:42:53,42,0:..
+16	460673	16_460673_G_A	G	A	63	.	AF=0.333333;AQ=63	GT:DP:AD:GQ:PL:RNC	0/0:14:14,0:42:0,42,419:..	0/1:26:7,18:54:63,0,54:..	0/1:23:12,10:47:58,0,47:..
+16	461697	16_461697_C_T	C	T	67	.	AF=0.666667;AQ=67	GT:DP:AD:GQ:PL:RNC	1/1:83:0,83:60:67,61,0:..	0/1:46:19,26:46:46,0,58:..	0/1:82:45,37:39:39,0,55:..
+16	461762	16_461762_T_C	T	C	73	.	AF=1;AQ=73	GT:DP:AD:GQ:PL:RNC	1/1:28:0,28:52:59,52,0:..	1/1:23:0,23:62:68,62,0:..	1/1:34:0,34:65:73,65,0:..
+16	464015	16_464015_A_C	A	C	36	.	AF=0.333333;AQ=36	GT:DP:AD:GQ:PL:RNC	1/1:2:0,2:1:30,3,0:..	1/1:2:0,2:6:36,8,0:..	0/0:0:0,0:1:0,0,0:..
+16	464377	16_464377_A_G	A	G	52	.	AF=0.333333;AQ=52	GT:DP:AD:GQ:PL:RNC	1/1:4:0,4:31:52,33,0:..	1/1:2:0,2:14:49,16,0:..	1/1:6:0,6:14:47,16,0:..
+16	465589	16_465589_A_G	A	G	67	.	AF=0.333333;AQ=67	GT:DP:AD:GQ:PL:RNC	1/1:3:0,3:37:67,39,0:..	0/1:1:0,1:2:42,0,0:..	0/1:1:0,1:7:42,0,5:..
+16	465612	16_465612_A_T	A	T	50	.	AF=0.333333;AQ=50	GT:DP:AD:GQ:PL:RNC	1/1:5:0,5:20:50,22,0:..	1/1:1:0,1:8:47,10,0:..	0/0:2:0,0:8:0,0,0:..
+16	465843	16_465843_A_G	A	G	53	.	AF=0.333333;AQ=53	GT:DP:AD:GQ:PL:RNC	1/1:4:0,4:17:53,19,0:..	0/0:0:0,0:1:0,3,29:..	1/1:1:0,1:8:40,10,0:..
+16	465907	16_465907_C_G	C	G	39	.	AF=0.333333;AQ=39	GT:DP:AD:GQ:PL:RNC	1/1:4:0,4:22:39,24,0:..	0/0:0:0,0:1:0,3,29:..	0/0:0:0,0:1:0,3,29:..
+16	467245	16_467245_C_CG	C	CG	57	.	AF=0.666667;AQ=57	GT:DP:AD:GQ:PL:RNC	1/1:2:0,2:19:46,20,0:..	0/0:0:0,0:1:0,3,29:..	1/1:4:0,4:22:57,23,0:..
+16	468450	16_468450_C_T	C	T	51	.	AF=0.333333;AQ=51	GT:DP:AD:GQ:PL:RNC	1/1:3:0,3:26:51,28,0:..	0/0:0:0,0:1:0,0,0:..	0/0:0:0,0:1:0,3,29:..
+16	468679	16_468679_C_T	C	T	54	.	AF=0.333333;AQ=54	GT:DP:AD:GQ:PL:RNC	0/1:6:3,3:53:54,0,57:..	0/0:0:0,0:1:0,0,0:..	0/1:2:1,1:24:32,0,25:..
+16	468964	16_468964_G_A	G	A	37	.	AF=0.333333;AQ=37	GT:DP:AD:GQ:PL:RNC	0/0:0:0,0:1:0,3,29:..	0/1:3:2,1:33:35,0,37:..	1/1:1:0,1:3:37,5,0:..
+2	179306016	2_179306016_A_G	A	G	44	.	AF=0.333333;AQ=44	GT:DP:AD:GQ:PL:RNC	1/1:1:0,1:30:44,32,0:..	0/0:0:0,0:1:0,0,0:..	1/1:1:0,1:7:28,9,0:..
+2	179397091	2_179397091_C_G	C	G	66	.	AF=0.333333;AQ=66	GT:DP:AD:GQ:PL:RNC	0/1:171:88,83:67:66,0,99:..	0/0:92:92,0:50:0,300,2999:..	0/1:170:88,81:58:62,0,59:..
+2	179431967	2_179431967_C_T	C	T	62	.	AF=0.166667;AQ=62	GT:DP:AD:GQ:PL:RNC	0/0:76:76,0:50:0,240,2879:..	0/0:95:95,0:50:0,300,2999:..	0/1:93:42,51:57:62,0,58:..
+2	179439154	2_179439154_A_G	A	G	40	.	AF=0.166667;AQ=40	GT:DP:AD:GQ:PL:RNC	0/0:83:83,0:50:0,300,2999:..	0/0:76:76,0:50:0,300,2999:..	0/1:279:150,129:41:40,0,53:..
+2	179444768	2_179444768_C_G	C	G	99	.	AF=1;AQ=99	GT:DP:AD:GQ:PL:RNC	1/1:262:0,262:66:99,66,0:..	1/1:225:0,225:37:62,37,0:..	1/1:253:0,253:41:63,41,0:..
+2	179477267	2_179477267_T_G	T	G	69	.	AF=0.5;AQ=69	GT:DP:AD:GQ:PL:RNC	0/1:108:40,67:67:69,0,71:..	0/0:28:28,0:50:0,300,2999:..	1/1:103:0,103:30:54,31,0:..
+2	179482089	2_179482089_C_T	C	T	57	.	AF=0.166667;AQ=57	GT:DP:AD:GQ:PL:RNC	0/0:23:23,0:50:0,210,2339:..	0/1:140:75,65:57:57,0,64:..	0/0:35:35,0:50:0,285,2849:..
+2	179513801	2_179513801_C_T	C	T	70	.	AF=1;AQ=70	GT:DP:AD:GQ:PL:RNC	1/1:6:0,6:66:70,66,0:..	1/1:8:0,8:34:50,34,0:..	1/1:5:0,5:30:54,30,0:..
+2	179523368	2_179523368_G_A	G	A	65	.	AF=1;AQ=65	GT:DP:AD:GQ:PL:RNC	1/1:11:0,11:53:53,56,0:..	1/1:7:0,7:42:65,42,0:..	1/1:9:0,8:41:61,41,0:..
+2	179540461	2_179540461_G_T	G	T	61	.	AF=0.333333;AQ=61	GT:DP:AD:GQ:PL:RNC	0/1:8:4,4:60:61,0,64:..	0/1:10:3,7:39:48,0,39:..	0/0:9:9,0:27:0,27,269:..
+2	179566146	2_179566146_T_G	T	G	88	.	AF=1;AQ=88	GT:DP:AD:GQ:PL:RNC	1/1:151:1,150:88:88,99,0:..	1/1:124:1,123:45:59,45,0:..	1/1:145:0,144:47:64,47,0:..
+2	179568708	2_179568708_G_A	G	A	74	.	AF=0.333333;AQ=74	GT:DP:AD:GQ:PL:RNC	0/1:28:14,14:99:74,0,99:..	0/1:25:14,11:62:65,0,64:..	0/0:16:16,0:48:0,48,479:..
+2	179578337	2_179578337_A_C	A	C	66	.	AF=1;AQ=66	GT:DP:AD:GQ:PL:RNC	1/1:2:0,2:43:56,43,0:..	1/1:3:0,3:29:63,29,0:..	1/1:6:0,6:31:66,31,0:..
+2	179579256	2_179579256_C_T	C	T	64	.	AF=0.333333;AQ=64	GT:DP:AD:GQ:PL:RNC	0/1:195:108,87:65:64,0,99:..	0/0:23:23,0:50:0,300,2999:..	0/1:190:97,93:51:55,0,53:..
+2	179585266	2_179585266_C_T	C	T	89	.	AF=1;AQ=89	GT:DP:AD:GQ:PL:RNC	1/1:104:0,104:89:89,99,0:..	1/1:98:0,98:42:59,42,0:..	1/1:114:0,114:40:56,40,0:..
+X	122536945	X_122536945_G_A	G	A	52	.	AF=0.5;AQ=52	GT:DP:AD:GQ:PL:RNC	1/1:64:0,64:48:50,49,0:..	./.:.:.:.:0,0,0:MM	0/1:127:47,80:49:52,0,50:..
+X	122537277	X_122537277_T_C	T	C	54	.	AF=0.166667;AQ=54	GT:DP:AD:GQ:PL:RNC	0/0:21:21,0:50:0,63,629:..	./.:.:.:.:0,0,0:MM	0/1:141:73,68:48:54,0,49:..
+X	122537418	X_122537418_C_T	C	T	46	.	AF=0.166667;AQ=46	GT:DP:AD:GQ:PL:RNC	0/0:21:21,0:50:0,63,629:..	./.:.:.:.:0,0,0:MM	0/1:146:71,74:46:46,0,56:..
+X	122541077	X_122541077_C_T	C	T	38	.	AF=0.166667;AQ=38	GT:DP:AD:GQ:PL:RNC	0/0:0:0,0:1:0,0,0:..	./.:.:.:.:0,0,0:MM	0/1:5:1,4:33:38,0,34:..
+X	122541121	X_122541121_T_C	T	C	45	.	AF=0.166667;AQ=45	GT:DP:AD:GQ:PL:RNC	0/0:2:2,0:6:0,6,59:..	./.:.:.:.:0,0,0:MM	0/1:5:2,3:42:45,0,43:..
+X	122548676	X_122548676_T_C	T	C	47	.	AF=0.333333;AQ=47	GT:DP:AD:GQ:PL:RNC	0/1:1:0,1:31:47,0,31:..	./.:.:.:.:0,0,0:MM	0/1:3:2,1:16:22,0,17:..

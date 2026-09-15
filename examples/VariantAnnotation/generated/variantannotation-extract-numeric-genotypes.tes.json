@@ -1,0 +1,87 @@
+{
+  "name": "VariantAnnotation/variantannotation-extract-numeric-genotypes",
+  "description": "Imports a BED file indicating regions to output, as well as a plain text file listing samples to include. Then uses VariantAnnotation to import the GT matrix from the indexed VCF. Only variants that pass filtering are retained. Outputs a tab-delimited text containing chromsome, position, reference and alternative alleles, and genotypes expressed as alternative allele count.\n",
+  "inputs": [
+    {
+      "name": "vcf",
+      "description": "VCF (variant call format) file",
+      "url": "{{inputs.vcf.url}}",
+      "path": "/tmp/biocjob/inputs/vcf.vcf.bgz",
+      "type": "FILE"
+    },
+    {
+      "name": "index",
+      "description": "TBI tabix index for VCF",
+      "url": "{{inputs.index.url}}",
+      "path": "/tmp/biocjob/inputs/index.tbi",
+      "type": "FILE"
+    },
+    {
+      "name": "bed",
+      "description": "BED file of regions to include",
+      "url": "{{inputs.bed.url}}",
+      "path": "/tmp/biocjob/inputs/bed.bed",
+      "type": "FILE"
+    },
+    {
+      "name": "samples",
+      "description": "File listing samples to include",
+      "url": "{{inputs.samples.url}}",
+      "path": "/tmp/biocjob/inputs/samples.txt",
+      "type": "FILE"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "numeric_genotypes",
+      "description": "Table of numeric genotypes",
+      "url": "{{outputs.numeric_genotypes.url}}",
+      "path": "/tmp/biocjob/outputs/numeric_genotypes.tsv.gz",
+      "type": "FILE"
+    }
+  ],
+  "resources": {
+    "cpu_cores": 1,
+    "ram_gb": 16,
+    "disk_gb": 10
+  },
+  "executors": [
+    {
+      "image": "bioconductor/bioconductor_docker:RELEASE_3_23",
+      "command": [
+        "Rscript",
+        "-e",
+        "missing <- setdiff(c(\"BiocJobs\", \"VariantAnnotation\"), rownames(installed.packages())); if (length(missing)) BiocManager::install(missing, update = FALSE, ask = FALSE)"
+      ],
+      "workdir": "/tmp/biocjob"
+    },
+    {
+      "image": "bioconductor/bioconductor_docker:RELEASE_3_23",
+      "command": [
+        "Rscript",
+        "-e",
+        "BiocJobs::execJob(\"VariantAnnotation\", \"variantannotation-extract-numeric-genotypes\")",
+        "--vcf",
+        "/tmp/biocjob/inputs/vcf.vcf.bgz",
+        "--index",
+        "/tmp/biocjob/inputs/index.tbi",
+        "--bed",
+        "/tmp/biocjob/inputs/bed.bed",
+        "--samples",
+        "/tmp/biocjob/inputs/samples.txt",
+        "--numeric_genotypes",
+        "/tmp/biocjob/outputs/numeric_genotypes.tsv.gz"
+      ],
+      "workdir": "/tmp/biocjob"
+    }
+  ],
+  "volumes": [
+    "/tmp/biocjob"
+  ],
+  "tags": {
+    "biocjobs.package": "VariantAnnotation",
+    "biocjobs.job": "variantannotation-extract-numeric-genotypes",
+    "biocjobs.spec": "1.0",
+    "biocjobs.template": "true"
+  }
+}

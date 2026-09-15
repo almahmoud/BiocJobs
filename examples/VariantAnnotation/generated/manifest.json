@@ -1,0 +1,57 @@
+{
+  "package": "VariantAnnotation",
+  "version": "1.59.3",
+  "biocjobs": "1.0",
+  "jobs": [
+    {
+      "name": "variantannotation-extract-numeric-genotypes",
+      "title": "Extract numeric genotypes from a VCF",
+      "description": "Imports a BED file indicating regions to output, as well as a plain text file listing samples to include. Then uses VariantAnnotation to import the GT matrix from the indexed VCF. Only variants that pass filtering are retained. Outputs a tab-delimited text containing chromsome, position, reference and alternative alleles, and genotypes expressed as alternative allele count.\n",
+      "version": "1.0.0",
+      "script": "scripts/variantannotation-extract-numeric-genotypes.R",
+      "inputs": [
+        {
+          "name": "vcf",
+          "format": "vcf.bgz",
+          "label": "VCF (variant call format) file",
+          "required": true
+        },
+        {
+          "name": "index",
+          "format": "tbi",
+          "label": "TBI tabix index for VCF",
+          "required": true
+        },
+        {
+          "name": "bed",
+          "format": "bed",
+          "label": "BED file of regions to include",
+          "required": true
+        },
+        {
+          "name": "samples",
+          "format": "txt",
+          "label": "File listing samples to include",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "numeric_genotypes",
+          "format": "tsv.gz",
+          "label": "Table of numeric genotypes"
+        }
+      ],
+      "options": [],
+      "resources": {
+        "cpus": 1,
+        "memory_gb": 16,
+        "disk_gb": 10
+      },
+      "depends": [],
+      "container": "bioconductor/bioconductor_docker:RELEASE_3_23",
+      "command": ["Rscript", "-e", "BiocJobs::execJob(\"VariantAnnotation\", \"variantannotation-extract-numeric-genotypes\")"],
+      "cli_command": ["VariantAnnotation", "variantannotation-extract-numeric-genotypes"]
+    }
+  ]
+}
