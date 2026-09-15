@@ -83,6 +83,7 @@ From the declaration, BiocJobs **generates**:
 | GA4GH TES | task template JSON | Funnel, TESK, cloud TES endpoints |
 | Nextflow | DSL2 module (`process` with typed inputs, `emit:` outputs, stub) | Nextflow / nf-core pipelines |
 | WDL | task (WDL 1.0, `parameter_meta`, runtime) | Cromwell, miniwdl, Terra, dxWDL |
+| HTCondor | submit description `.sub` + executable `.sh` | `condor_submit`, CHTC via submitr |
 | Manifest | JSON summary of all jobs | registry aggregation, build infra |
 | CLI | Rapp application (via BiocExecute) | humans at a shell |
 
@@ -379,6 +380,7 @@ Rscript -e 'BiocJobs::biocjobsCLI()' galaxy   . my-analysis --out wrappers/my_an
 Rscript -e 'BiocJobs::biocjobsCLI()' tes      . my-analysis --out wrappers/my-analysis.tes.json
 Rscript -e 'BiocJobs::biocjobsCLI()' nextflow . my-analysis --out wrappers/my_analysis.nf
 Rscript -e 'BiocJobs::biocjobsCLI()' wdl      . my-analysis --out wrappers/my_analysis.wdl
+Rscript -e 'BiocJobs::biocjobsCLI()' htcondor . my-analysis --out wrappers/my-analysis.sub
 Rscript -e 'BiocJobs::biocjobsCLI()' manifest . --out wrappers/manifest.json
 ```
 
@@ -461,6 +463,52 @@ workflow analyze {
     call jobs.my_analysis { input: input1 = input_file, method = "fast" }
 }
 ```
+
+### HTCondor
+
+Two files: an HTCondor submit description (`<job>.sub`) and the executable
+shell script it runs (`<job>.sh`, written beside it and marked executable).
+Declared inputs become `transfer_input_files`, outputs become
+`transfer_output_files`, `resources` become
+`request_cpus`/`request_memory`/`request_disk`, and the job's container
+becomes a `container_image` under the container universe.
+
+HTCondor has no typed parameter surface, so unlike the Galaxy tool or the WDL
+task this is a concrete submission rather than a reusable typed template. The
+closest analogue among the other targets is the TES task, and it uses the same
+convention: an option's declared default is written into the script, and an
+option that is `required` with no default becomes a `{{options.<name>}}`
+placeholder. Fill those in before submitting. If one reaches a running job,
+`jobParams()` rejects it by name, so an unfilled submission fails immediately
+instead of analysing the wrong thing.
+
+One thing to know about HTCondor specifically: transferred inputs land in the
+job's scratch directory **by basename**, so the generated script refers to
+every file by basename. Point `transfer_input_files` at wherever your files
+actually live; their names on the submit side do not have to match.
+
+```bash
+condor_submit my-analysis.sub
+```
+
+The emitted pair is also exactly what the
+[submitr](https://cran.r-project.org/package=submitr) package stages and
+submits to an HTC submit node such as CHTC, so the two compose directly:
+
+```r
+cfg <- submitr::htc_config()
+submitr::htc_upload(
+    files = c("my-analysis.sub", "my-analysis.sh", "input1.tsv"),
+    config = cfg)
+submitr::htc_submit(submit_file = "my-analysis.sub", config = cfg)
+submitr::htc_status(cluster_id = ..., config = cfg, watch = TRUE)
+submitr::htc_download(files = "*.tsv", config = cfg, local_path = "results/")
+```
+
+Use `submitr`'s own `htc_gen_submit()` instead when you want its resource
+presets, multi-job manifests or GPU options; use the BiocJobs generator when
+you want the submit file to stay in lockstep with the job declaration that
+also produces the Galaxy, TES, Nextflow and WDL artifacts.
 
 ### Manifest
 

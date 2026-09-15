@@ -12,8 +12,9 @@
   point used by every generated artifact.
 * Generators for GA4GH Task Execution Service (TES) v1.1 tasks
   (`tesTask()`), Galaxy tool wrappers (`galaxyTool()`), Nextflow DSL2
-  modules (`nextflowModule()`) and WDL 1.0 tasks (`wdlTask()`), plus a
-  per-package job manifest (`jobManifest()`) for registry aggregation.
+  modules (`nextflowModule()`), WDL 1.0 tasks (`wdlTask()`) and HTCondor
+  submit files (`htcondorSubmit()`), plus a per-package job manifest
+  (`jobManifest()`) for registry aggregation.
 * `jobSkeleton()` scaffolds a new job declaration from a template.
 * Command-line interface (`biocjobsCLI()`) exposing discovery, validation,
   local runs and every generator for use in automation.

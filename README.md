@@ -7,6 +7,7 @@ workflow infrastructure needs to dispatch those jobs: [GA4GH
 TES](https://github.com/ga4gh/task-execution-schemas) task definitions,
 [Galaxy](https://galaxyproject.org) tool wrappers,
 [Nextflow](https://www.nextflow.io) DSL2 modules,
+[HTCondor](https://htcondor.org) submit files,
 [WDL](https://openwdl.org) tasks, a machine-readable manifest for registry
 building — and, through [BiocExecute](#a-command-line-for-free-biocexecute),
 a human-facing command line. One declaration, many execution targets, no
@@ -73,6 +74,7 @@ flowchart LR
     B --> T["TES task JSON<br/>(GA4GH TES: Funnel, TESK, cloud batch)"]
     B --> G["Galaxy tool XML<br/>(auto-generated wrapper)"]
     B --> N["Nextflow DSL2 module<br/>(nf pipelines)"]
+    B --> H["HTCondor submit file<br/>(condor_submit, CHTC via submitr)"]
     B --> W["WDL task<br/>(Cromwell, Terra, miniwdl)"]
     B --> M["Package job manifest<br/>(registry aggregation)"]
     B --> C["CLI subcommands<br/>(via BiocExecute/Rapp)"]
@@ -193,6 +195,7 @@ Rscript -e 'BiocJobs::biocjobsCLI()' tes      /path/to/pkg my-analysis --out tas
 Rscript -e 'BiocJobs::biocjobsCLI()' galaxy   /path/to/pkg my-analysis --out tool.xml
 Rscript -e 'BiocJobs::biocjobsCLI()' nextflow /path/to/pkg my-analysis --out module.nf
 Rscript -e 'BiocJobs::biocjobsCLI()' wdl      /path/to/pkg my-analysis --out task.wdl
+Rscript -e 'BiocJobs::biocjobsCLI()' htcondor /path/to/pkg my-analysis --out job.sub
 Rscript -e 'BiocJobs::biocjobsCLI()' manifest /path/to/pkg --out manifest.json
 ```
 
@@ -239,6 +242,19 @@ options become required WDL inputs, enforced by the engine itself),
 outputs collected from the working directory, `runtime` from resources,
 and `parameter_meta` carrying the labels, help, choices, and bounds the
 WDL type system cannot express. The DESeq2 task passes `miniwdl check`.
+
+**HTCondor target.** Each job becomes an HTCondor submit description
+(`<job>.sub`) plus the executable script it runs (`<job>.sh`). Inputs become
+`transfer_input_files`, outputs `transfer_output_files`, resources the
+`request_*` knobs, and the container an image under the container universe.
+HTCondor has no typed parameter surface, so this is a concrete submission
+rather than a typed template: declared defaults are written in, and a
+required option with no default becomes a `{{options.<name>}}` placeholder
+that `jobParams()` refuses at run time if left unfilled. Files transfer into
+the job's scratch directory by basename, and the script refers to them that
+way. The pair is what the
+[submitr](https://cran.r-project.org/package=submitr) package stages and
+submits to an HTC submit node such as CHTC, so the two compose directly.
 
 **Manifest / registry.** `jobManifest()` summarizes every job a package
 declares — full typed interface, resources, container, canonical command —
@@ -503,6 +519,7 @@ Generate execution artifacts:
 Rscript -e 'BiocJobs::biocjobsCLI()' galaxy examples/DESeq2 deseq2-differential-expression
 Rscript -e 'BiocJobs::biocjobsCLI()' nextflow examples/DESeq2 deseq2-differential-expression
 Rscript -e 'BiocJobs::biocjobsCLI()' wdl examples/DESeq2 deseq2-differential-expression
+Rscript -e 'BiocJobs::biocjobsCLI()' htcondor examples/DESeq2 deseq2-differential-expression
 ```
 
 ---

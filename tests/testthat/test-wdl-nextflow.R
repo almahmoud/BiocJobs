@@ -121,3 +121,74 @@ test_that("a parameter named meta does not collide with the meta map", {
     expect_match(text, "val meta_", fixed = TRUE)   # mangled variable
     expect_match(text, "--meta ", fixed = TRUE)     # flag stays literal
 })
+
+## ---- HTCondor ----
+
+test_that("htcondorSubmit renders a submit description", {
+    text <- htcondorSubmit(toy_job(), image = "example/image:1")
+    expect_match(text, "universe                = container", fixed = TRUE)
+    expect_match(text, "container_image         = example/image:1", fixed = TRUE)
+    expect_match(text, "executable              = toy-normalize.sh", fixed = TRUE)
+    expect_match(text, "transfer_input_files    = matrix.tsv", fixed = TRUE)
+    expect_match(text, "transfer_output_files   = normalized.tsv", fixed = TRUE)
+    expect_match(text, "request_cpus            = 1", fixed = TRUE)
+    expect_match(text, "request_memory          = 1GB", fixed = TRUE)
+    expect_match(text, "request_disk            = 1GB", fixed = TRUE)
+    expect_match(text, "queue 1", fixed = TRUE)
+})
+
+test_that("the executable script is written beside the submit file", {
+    dir <- tempfile("condor_"); dir.create(dir)
+    sub <- file.path(dir, "toy-normalize.sub")
+    htcondorSubmit(toy_job(), image = "x/y:1", file = sub)
+    sh <- file.path(dir, "toy-normalize.sh")
+    expect_true(all(file.exists(sub, sh)))
+    script <- readLines(sh)
+    expect_identical(script[1L], "#!/bin/bash")
+    expect_true(any(grepl("set -euo pipefail", script, fixed = TRUE)))
+    ## Files are referenced by basename: HTCondor transfers them flat.
+    expect_true(any(grepl("--matrix 'matrix.tsv'", script, fixed = TRUE)))
+    expect_true(any(grepl("--normalized 'normalized.tsv'", script,
+                          fixed = TRUE)))
+    ## Spec defaults are written in.
+    expect_true(any(grepl("--method 'log2'", script, fixed = TRUE)))
+    expect_true(any(grepl("--center 'false'", script, fixed = TRUE)))
+    ## The script is executable, as HTCondor requires.
+    expect_identical(as.character(file.mode(sh)), "755")
+})
+
+test_that("required options without a default become placeholders", {
+    spec <- toy_spec_list()
+    spec$options[[length(spec$options) + 1L]] <- list(
+        name = "factor", type = "string", required = TRUE, label = "Factor")
+    dir <- tempfile("condor_"); dir.create(dir)
+    htcondorSubmit(as_job(spec), image = "x/y:1",
+                   file = file.path(dir, "toy-normalize.sub"))
+    script <- readLines(file.path(dir, "toy-normalize.sh"))
+    expect_true(any(grepl("--factor '{{options.factor}}'", script,
+                          fixed = TRUE)))
+    ## Supplying the value replaces the placeholder. The script is named
+    ## after the job, matching the submit file's `executable` line, whatever
+    ## the submit file itself is called.
+    dir2 <- tempfile("condor_"); dir.create(dir2)
+    htcondorSubmit(as_job(spec), image = "x/y:1",
+                   options = list(factor = "condition"),
+                   file = file.path(dir2, "renamed.sub"))
+    expect_true(any(grepl("--factor 'condition'",
+                          readLines(file.path(dir2, "toy-normalize.sh")),
+                          fixed = TRUE)))
+})
+
+test_that("option values containing quotes cannot break the script", {
+    spec <- toy_spec_list()
+    spec$options[[length(spec$options) + 1L]] <- list(
+        name = "note", type = "string", default = "a'b", label = "Note")
+    dir <- tempfile("condor_"); dir.create(dir)
+    htcondorSubmit(as_job(spec), image = "x/y:1",
+                   file = file.path(dir, "toy-normalize.sub"))
+    sh <- file.path(dir, "toy-normalize.sh")
+    expect_true(any(grepl("--note 'a'\\''b'", readLines(sh), fixed = TRUE)))
+    ## The rendered script is valid bash.
+    skip_if(Sys.which("bash") == "")
+    expect_identical(system2("bash", c("-n", shQuote(sh))), 0L)
+})

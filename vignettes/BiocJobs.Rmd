@@ -481,6 +481,47 @@ workflow normalize {
 }
 ```
 
+## HTCondor
+
+`htcondorSubmit()` generates an [HTCondor](https://htcondor.org) submit
+description together with the executable script it runs. Declared inputs
+become `transfer_input_files`, outputs `transfer_output_files`, `resources:`
+the `request_*` knobs, and the container an image under the container
+universe.
+
+```{r htcondor}
+sub <- htcondorSubmit(job, image = "bioconductor/bioconductor_docker:devel")
+cat(sub)
+```
+
+HTCondor has no typed parameter surface, so this is a concrete submission
+rather than a typed template like the Galaxy tool or the WDL task. Option
+values are written into the script — the declared default where there is
+one, and otherwise the same `{{options.<name>}}` placeholder `tesTask()`
+uses, which `jobParams()` rejects by name if it ever reaches a running job.
+Note that HTCondor transfers inputs into the job's scratch directory by
+basename, so the script refers to every file by basename:
+
+```{r htcondor-script}
+condor_dir <- file.path(wd, "condor")
+dir.create(condor_dir, showWarnings = FALSE)
+invisible(htcondorSubmit(job, file = file.path(condor_dir,
+                                               "toy-normalize.sub")))
+list.files(condor_dir)
+cat(readLines(file.path(condor_dir, "toy-normalize.sh")), sep = "\n")
+```
+
+Submit it directly with `condor_submit toy-normalize.sub`, or hand the pair
+to the [submitr](https://cran.r-project.org/package=submitr) package, which
+stages and submits to an HTC submit node such as CHTC:
+
+```
+cfg <- submitr::htc_config()
+submitr::htc_upload(files = c("toy-normalize.sub", "toy-normalize.sh"),
+                    config = cfg)
+submitr::htc_submit(submit_file = "toy-normalize.sub", config = cfg)
+```
+
 # The manifest and the registry story
 
 `jobManifest()` summarizes every job a package declares — the full typed

@@ -19,6 +19,7 @@ commands:
   galaxy   <pkg> <job> [--out FILE]    generate a Galaxy tool wrapper (XML)
   nextflow <pkg> <job> [--out FILE]    generate a Nextflow DSL2 module
   wdl      <pkg> <job> [--out FILE]    generate a WDL task
+  htcondor <pkg> <job> [--out FILE]    generate an HTCondor submit file
   run      <pkg> <job> [--workdir DIR] [--<param> <value> ...]
                                        run a job locally
 
@@ -82,7 +83,7 @@ biocjobsCLI <- function(args = commandArgs(trailingOnly = TRUE)) {
         return(0L)
     }
     if (!command %in% c("list", "validate", "manifest", "tes", "galaxy",
-                        "nextflow", "wdl", "run"))
+                        "nextflow", "wdl", "htcondor", "run"))
         stop("unknown command '", command, "'")
     if (!length(rest))
         stop("command '", command, "' needs a package argument")
@@ -136,7 +137,8 @@ biocjobsCLI <- function(args = commandArgs(trailingOnly = TRUE)) {
         tes = ,
         galaxy = ,
         nextflow = ,
-        wdl = {
+        wdl = ,
+        htcondor = {
             if (!length(rest))
                 stop("command '", command, "' needs a job name")
             jobname <- rest[[1L]]
@@ -152,6 +154,13 @@ biocjobsCLI <- function(args = commandArgs(trailingOnly = TRUE)) {
                 out <- opts$out %||% paste0(.galaxyToolId(job), ".xml")
                 writeGalaxyTool(doc, out, job = job)
                 message("wrote ", out)
+            } else if (identical(command, "htcondor")) {
+                ## Writes the submit file and, beside it, the executable
+                ## script the submit file names.
+                out <- opts$out %||% paste0(job$name, ".sub")
+                htcondorSubmit(job, file = out)
+                message("wrote ", out, " and ",
+                        file.path(dirname(out), paste0(job$name, ".sh")))
             } else {
                 generate <- if (identical(command, "nextflow"))
                     nextflowModule else wdlTask

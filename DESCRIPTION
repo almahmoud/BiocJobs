@@ -12,9 +12,9 @@ Description: A lightweight framework for Bioconductor package developers to
     inst/biocjobs/. BiocJobs discovers and validates these specifications, runs
     jobs locally, and automatically generates execution artifacts for
     workflow infrastructure: GA4GH Task Execution Service (TES) task
-    definitions, Galaxy tool wrappers, Nextflow DSL2 modules and Workflow
-    Description Language (WDL) tasks, plus a machine-readable manifest for
-    building a cross-package job registry.
+    definitions, Galaxy tool wrappers, Nextflow DSL2 modules, Workflow
+    Description Language (WDL) tasks and HTCondor submit files, plus a
+    machine-readable manifest for building a cross-package job registry.
 License: Artistic-2.0
 Encoding: UTF-8
 URL: https://github.com/almahmoud/BiocJobs
