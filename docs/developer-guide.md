@@ -611,3 +611,12 @@ The [README](../README.md) covers the framework design and rationale, and
 *This guide is for maintainers **using** BiocJobs in their own package. To
 contribute to BiocJobs itself — a new generator, a spec change, a bug fix —
 see [CONTRIBUTING.md](../CONTRIBUTING.md).*
+
+---
+
+## Documentation status
+
+This documentation was drafted with AI assistance and has not yet been fully
+reviewed. It may be inaccurate or out of date in places until every claim has
+been checked against the implementation. Treat it as provisional while this
+notice is present; it will be removed once the review is complete.

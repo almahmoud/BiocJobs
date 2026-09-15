@@ -669,6 +669,13 @@ target costs, because they consume the same specifications.
 - `help(package = "BiocJobs")` for the reference documentation of all
   exported functions.
 
+# Documentation status
+
+This documentation was drafted with AI assistance and has not yet been fully
+reviewed. It may be inaccurate or out of date in places until every claim has
+been checked against the implementation. Treat it as provisional while this
+notice is present; it will be removed once the review is complete.
+
 # Session information
 
 ```{r session-info}

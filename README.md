@@ -504,3 +504,12 @@ Rscript -e 'BiocJobs::biocjobsCLI()' galaxy examples/DESeq2 deseq2-differential-
 Rscript -e 'BiocJobs::biocjobsCLI()' nextflow examples/DESeq2 deseq2-differential-expression
 Rscript -e 'BiocJobs::biocjobsCLI()' wdl examples/DESeq2 deseq2-differential-expression
 ```
+
+---
+
+## Documentation status
+
+This documentation was drafted with AI assistance and has not yet been fully
+reviewed. It may be inaccurate or out of date in places until every claim has
+been checked against the implementation. Treat it as provisional while this
+notice is present; it will be removed once the review is complete.

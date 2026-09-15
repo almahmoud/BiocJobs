@@ -165,3 +165,12 @@ New option types, new `format:` entries in `jobFormats()`, and new
 resource fields are all specification changes — they have to be mapped
 onto *every* target, so include the generator updates in the same pull
 request.
+
+---
+
+## Documentation status
+
+This documentation was drafted with AI assistance and has not yet been fully
+reviewed. It may be inaccurate or out of date in places until every claim has
+been checked against the implementation. Treat it as provisional while this
+notice is present; it will be removed once the review is complete.
