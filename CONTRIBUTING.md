@@ -42,9 +42,9 @@ Rscript -e 'BiocCheck::BiocCheck("BiocJobs", `new-package` = TRUE)'
 ```
 
 The suite needs no network and no Bioconductor experiment data. The `toy`
-example package shipped at `BiocJobs/inst/examples/toy` is the fixture for anything
-that must exercise a real job end to end — prefer it over inventing a new
-one, and reach for `examples/DESeq2` only for documentation.
+example package shipped at `BiocJobs/inst/examples/toy` is the fixture for
+tests that exercise a real job end to end; `examples/DESeq2` is
+documentation only.
 
 ## Generated artifacts are never hand-edited
 

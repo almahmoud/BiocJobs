@@ -264,7 +264,7 @@ paper and the papers behind optional methods your job exposes.
 
 ## 5. Step 3 — write the script
 
-The script template from `jobSkeleton()` is the contract in miniature:
+The script template from `jobSkeleton()` shows the contract:
 
 ```r
 params <- BiocJobs::jobParams("mypackage", "my-analysis")
@@ -290,7 +290,7 @@ The rules, all of which exist because some engine depends on them:
    device is not.
 4. **Write every declared output**, exactly to `params$<name>`.
 5. **Log to stderr** with `message()` — engines capture it as the job log.
-   A `sessionInfo()` at the end gives every run provenance for free.
+   A `sessionInfo()` at the end records the provenance of every run.
 6. **Validate scientific preconditions defensively.** Batch users can't
    see your data structures. The DESeq2 example script is the reference
    here — it checks, with named errors, for: non-numeric counts, NA cells,
@@ -524,7 +524,7 @@ release-wide registry from which all of the above regenerate.
 
 [BiocExecute](https://github.com/BiocCodingCollaborations/BiocExecute)
 (with the `feat/biocjobs-specs` branch) turns the same declarations into a
-human-facing CLI — **you write nothing extra**. In your package source:
+human-facing CLI. In your package source:
 
 ```r
 BiocExecute::execCompile()      # reads inst/biocjobs/, writes exec/<Package>.R
@@ -646,8 +646,8 @@ RUN Rscript -e 'BiocManager::install(c("BiocJobs", "mypackage", "apeglm"), \
 The container is the entry way for every target, Galaxy included: the
 generated tool's only requirement is a `<container type="docker">` naming
 the same image the TES task, Nextflow module, WDL task and HTCondor submit
-file use. Declaring `container:` in the spec is therefore the single knob
-that controls where a job runs everywhere.
+file use. Declaring `container:` in the spec therefore controls where a
+job runs on every target.
 
 Bioconda `<requirement type="package">` entries are deliberately not emitted
 for now. They would describe a second environment, resolved separately from
@@ -686,7 +686,7 @@ accept an archive (`format: tar`, `tar.gz` or `zip` — all in
 
 **Where do defaults live — spec or script?** Spec, always. The script must
 not re-default anything; the generated UIs show the spec's defaults, and a
-script that overrides them silently lies to users.
+script that overrides them silently misleads users.
 
 **What R version / dependencies does the spec assume?** Whatever your
 package declares. Generators pin the container to a Bioconductor release;

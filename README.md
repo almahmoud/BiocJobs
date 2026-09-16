@@ -9,7 +9,7 @@ TES](https://github.com/ga4gh/task-execution-schemas) task definitions,
 [Nextflow](https://www.nextflow.io) DSL2 modules,
 [HTCondor](https://htcondor.org) submit files,
 [WDL](https://openwdl.org) tasks, a machine-readable manifest for registry
-building — and, through [BiocExecute](#a-command-line-for-free-biocexecute),
+building — and, through [BiocExecute](#a-command-line-via-biocexecute),
 a human-facing command line. One declaration, many execution targets, no
 hand-written wrappers.
 
@@ -206,7 +206,7 @@ command inside a Bioconductor container. When the generic
 `bioconductor_docker` image is used, a *bootstrap executor* is prepended
 that installs the host package, BiocJobs, and any declared `depends` via
 `BiocManager` (binary installs inside `bioconductor_docker`) — so the task
-is genuinely executable out of the box; point `container:` at a
+is executable out of the box; point `container:` at a
 purpose-built image to skip it. URLs not known at generation time are
 emitted as `{{inputs.counts.url}}`-style placeholders and the task is tagged
 `biocjobs.template: "true"`, so the JSON acts as a *submission template*:
@@ -268,7 +268,7 @@ package tarballs ──▶ findJobs()/validateJob() ──▶ per-package manife
                  ──▶ registry ──▶ {TES templates, Galaxy tools, ...} per release
 ```
 
-## A command line for free (BiocExecute)
+## A command line via BiocExecute
 
 The same declarations double as a human-facing CLI through
 [BiocExecute](https://github.com/BiocCodingCollaborations/BiocExecute)
@@ -287,7 +287,7 @@ $ DESeq2 deseq2-differential-expression \
 significant genes at padj < 0.05: 43
 ```
 
-The division of labour is deliberate: **BiocJobs owns the declaration and
+**BiocJobs owns the declaration and
 validation**, **BiocExecute/Rapp own the shell ergonomics** (subcommand
 dispatch, `--help`, PATH launchers). At run time the generated subcommand
 hands its parsed values to `BiocJobs::execJob(values = ...)`, so required
@@ -342,7 +342,7 @@ pre-filtering, demonstrating every option type in the spec.
 - [`generated/manifest.json`](examples/DESeq2/generated/manifest.json)
   — the package's job manifest for registry aggregation.
 
-**Proof it runs.** With DESeq2 (1.52.0, Bioconductor 3.23) installed, on
+With DESeq2 (1.52.0, Bioconductor 3.23) installed, on
 simulated data ([`test-data/`](examples/DESeq2/test-data/), 600 genes × 6
 samples, 60 true DE genes):
 

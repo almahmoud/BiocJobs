@@ -84,7 +84,8 @@ Three principles hold the framework together:
 This vignette uses `toy`, a miniature package shipped inside BiocJobs purely
 to demonstrate and test the framework. It declares one job,
 `toy-normalize`, that reads a numeric matrix and writes a normalized one.
-Everything shown below actually runs while this vignette is built.
+The chunks below run while this vignette is built, except the two in the
+BiocExecute section, which are shown but not evaluated.
 
 ```{r toy-package}
 library(BiocJobs)
@@ -385,7 +386,7 @@ cat(head(readLines(json_file), 25), sep = "\n")
 Because the generic `bioconductor/bioconductor_docker` image ships no
 analysis packages, a *bootstrap* executor is prepended that installs the
 host package, BiocJobs and any declared `depends` with `BiocManager`, so the
-task is genuinely executable out of the box. Point `container:` (or the
+task is executable out of the box. Point `container:` (or the
 `image` argument) at a purpose-built image and the bootstrap disappears:
 
 ```{r tes-executors}
@@ -582,7 +583,7 @@ Galaxy wrapper, and regenerate the artifacts. The
 documents every specification field, the release checklist, and a
 troubleshooting table.
 
-# A command line for free (optional)
+# A command line via BiocExecute (optional)
 
 The same declarations double as a human-facing command line through
 [BiocExecute](https://github.com/BiocCodingCollaborations/BiocExecute), a
@@ -615,7 +616,7 @@ Commands:
 $ mypackage my-analysis --input1 data.tsv --method fast
 ```
 
-The division of labour is deliberate: **BiocJobs owns the declaration and
+**BiocJobs owns the declaration and
 its validation**, **BiocExecute/Rapp own the shell ergonomics** (subcommand
 dispatch, `--help`, PATH launchers). At run time the generated subcommand
 hands its parsed values straight to `execJob()`:
