@@ -16,10 +16,10 @@ install.packages(c("testthat", "knitr", "rmarkdown"))      # Suggests
 BiocManager::install("BiocStyle")                          # vignette
 ```
 
-Then install the package from a source checkout:
+Then install the package from a source checkout of the repository:
 
 ```bash
-R CMD INSTALL .
+R CMD INSTALL BiocJobs
 ```
 
 Optional, only needed to check generated artifacts against the tools that
@@ -31,18 +31,18 @@ do.
 ## Running the tests
 
 ```r
-testthat::test_local()          # from the package root
+testthat::test_local("BiocJobs")
 ```
 
 or the full check the way CI runs it:
 
 ```bash
-R CMD build . && R CMD check BiocJobs_*.tar.gz
-Rscript -e 'BiocCheck::BiocCheck(getwd(), `new-package` = TRUE)'
+R CMD build BiocJobs && R CMD check BiocJobs_*.tar.gz
+Rscript -e 'BiocCheck::BiocCheck("BiocJobs", `new-package` = TRUE)'
 ```
 
 The suite needs no network and no Bioconductor experiment data. The `toy`
-example package shipped at `inst/examples/toy` is the fixture for anything
+example package shipped at `BiocJobs/inst/examples/toy` is the fixture for anything
 that must exercise a real job end to end — prefer it over inventing a new
 one, and reach for `examples/DESeq2` only for documentation.
 
@@ -73,12 +73,12 @@ Note that the artifacts embed the BiocJobs version, so bumping `Version:`
 in `DESCRIPTION` makes them stale: regenerate in the same commit.
 
 Roxygen documentation is generated too — edit the roxygen comments in
-`R/`, then `roxygen2::roxygenise()`; never edit `man/*.Rd` or `NAMESPACE`
-directly.
+`BiocJobs/R/`, then `roxygen2::roxygenise("BiocJobs")`; never edit
+`man/*.Rd` or `NAMESPACE` directly.
 
 ## What CI enforces
 
-Two workflows run on every push and pull request to `main`
+Three workflows run on every push and pull request to `main`
 (`.github/workflows/`):
 
 - **check** — `R CMD check` via `rcmdcheck` with `error_on = "warning"`,
@@ -91,6 +91,9 @@ Two workflows run on every push and pull request to `main`
   (`xmllint --schema`), the GA4GH TES 1.1 `tesTask` schema
   (`.github/scripts/validate-tes-task.py`, which also checks the
   create-task rules), `miniwdl check`, and `nextflow lint`.
+- **action** — runs `biocjobs-action` against the toy package: builds the
+  image from `.github/docker/Dockerfile.toy`, generates every wrapper
+  inside it and lints the Galaxy tool with planemo.
 
 A red **artifacts** run almost always means "you changed a generator or a
 spec and did not commit the regenerated files".
@@ -120,13 +123,13 @@ touch anything outside the spec.
 
 Touch points for a new target `foo`:
 
-1. `R/foo.R` — the generator, exported as `fooTask()`/`fooModule()`,
+1. `BiocJobs/R/foo.R` — the generator, exported as `fooTask()`/`fooModule()`,
    plus internal helpers for that language's identifier and string
    escaping rules. Emit the canonical command
    (`Rscript -e 'BiocJobs::execJob("pkg", "job")' --flag value`); never
    invent a second calling convention.
 2. `NAMESPACE` / `man/` — via roxygen (`roxygen2::roxygenise()`).
-3. `R/cli.R` — add the subcommand to `.CLI_USAGE`, to the allowed-command
+3. `BiocJobs/R/cli.R` — add the subcommand to `.CLI_USAGE`, to the allowed-command
    vector in `.cliDispatch()`, and to the generator branch of the
    `switch()`.
 4. `tests/testthat/test-wdl-nextflow.R` (or a new `test-foo.R`) — cover
@@ -139,6 +142,8 @@ Touch points for a new target `foo`:
 6. `.github/workflows/artifacts.yaml` — add a generation command and a
    validation step using that ecosystem's own linter, so the new artifact
    is guarded like the others.
+7. `biocjobs-action/scripts/generate.sh` — add the target to the list the
+   action generates.
 
 ## Bugs, and changes to the specification
 
@@ -152,7 +157,7 @@ Changes to the specification format itself are the highest-cost changes
 here, because every declared job in every package is written against it.
 Propose them as an issue before opening a pull request, and say what a
 maintainer with an existing spec has to do. The format carries a version:
-`.SPEC_VERSION` in `R/spec.R`, matched against the `biocjobs:` field of
+`.SPEC_VERSION` in `BiocJobs/R/spec.R`, matched against the `biocjobs:` field of
 every spec.
 
 - Additive, optional fields: no version bump; document the field, add

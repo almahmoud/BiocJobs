@@ -47,11 +47,11 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Bioconductor Core Team \email{maintainer@bioconductor.org}
+\strong{Maintainer}: Alexandru Mahmoud \email{almahmoudresearch@gmail.com} (\href{https://orcid.org/0000-0002-3779-492X}{ORCID})
 
 Authors:
 \itemize{
-  \item Bioconductor Core Team \email{maintainer@bioconductor.org}
+  \item Alexandru Mahmoud \email{almahmoudresearch@gmail.com} (\href{https://orcid.org/0000-0002-3779-492X}{ORCID})
 }
 
 }

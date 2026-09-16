@@ -565,65 +565,49 @@ Commit the compiled `exec/<Package>.R` like any generated artifact and
 re-run `execCompile()` when specs change. Add `BiocJobs` (and optionally
 `BiocExecute`) to your `Suggests:`.
 
-## 10b. Continuous integration for a fork
+## 10b. Continuous integration
 
-BiocJobs ships a **reusable GitHub Actions workflow** that does the whole
-loop for a package that declares jobs: builds the package container, pushes
-it to GHCR, generates every wrapper *inside that container*, publishes the
-wrappers as build artifacts, and lints and tests the generated Galaxy tool
-under a real Galaxy via planemo.
+The repository ships a GitHub Action, `biocjobs-action`, that builds your
+package's container image, generates every wrapper inside it, uploads the
+wrappers as a build artifact, and lints and tests the generated Galaxy tool
+with planemo.
 
-Copy `inst/templates/caller-workflow.yml` from the installed package to
-`.github/workflows/biocjobs.yml` in your fork:
+Add `.github/workflows/biocjobs.yml` to your package:
 
 ```yaml
+name: BiocJobs
+on:
+  push:
+    branches: [devel, main]
+  pull_request:
 jobs:
   biocjobs:
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    uses: almahmoud/BiocJobs/.github/workflows/biocjobs-package.yml@main
+    steps:
+      - uses: actions/checkout@v7
+      - uses: almahmoud/BiocJobs/biocjobs-action@main
 ```
 
-The `permissions:` block belongs in your caller, not in the reusable
-workflow: a called workflow can only *downgrade* what its caller grants, and
-the repository default is read-only, so omitting it makes the GHCR push fail
-with a 403.
+and `.github/docker/Dockerfile`, which must install R, your package and
+BiocJobs. [`examples/DESeq2/.github`](../examples/DESeq2/.github) has both
+files; the action's [README](../biocjobs-action/README.md) lists every
+input.
 
-Useful inputs, all optional:
+- Wrappers are build artifacts, not commits, so the repository never
+  carries generated files that can go stale.
+- Generation runs inside the built image, so the runner installs no R.
+  Each wrapper names that image, by digest once it has been pushed.
+- Pull requests cannot push the image, but the Galaxy test still runs
+  against the image built on the runner.
+- A GHCR package created by Actions is private until you make it public in
+  the package settings.
 
-| Input | Default | Meaning |
-|---|---|---|
-| `dockerfile` | `.github/docker/Dockerfile` | image recipe |
-| `job-names` | every declared job | restrict to named jobs |
-| `push-image` | `true` | forced off for pull requests |
-| `run-planemo` | `true` | lint, and test when an image was pushed |
-| `galaxy-branch` | `release_26.1` | Galaxy release planemo tests against |
-
-Three things worth knowing:
-
-- **Wrappers are artifacts, not commits.** They are regenerated from the
-  declaration on every run and downloaded from the run's artifacts, so the
-  repository never carries generated files that can go stale.
-- **Generation runs inside the built image**, which already has R, your
-  package and BiocJobs, so the runner installs no R at all. Every artifact is
-  pinned to that image by digest through the generators' `--image` flag.
-- **Pull requests lint but do not test.** A pull request token is read-only,
-  so the image cannot be pushed, and a later job on a fresh runner has
-  nothing to pull. Linting needs no container and always runs.
-
-For the Galaxy test to do anything, the job's `tests:` block must reference
-files that exist relative to the package root; the generator stages them
-into a `test-data/` directory beside the tool XML, which is where Galaxy
-looks. A tool with no staged test data is skipped with a warning rather than
-failing. A `tests:` block naming a file that was never staged is a hard
-failure inside Galaxy, so `validate` reports unresolvable test files as a
-note.
-
-Note also that a GHCR package published by Actions is **private by default**,
-even from a public repository. The workflow logs in again before pulling, so
-CI works either way, but making the package public is a manual step in the
-fork's package settings if you want others to run the wrappers.
+For the Galaxy test to run, the job's `tests:` block must reference files
+that exist relative to the package root; the generator stages them next to
+the tool XML. A tool with no staged test data is linted only.
 
 ## 11. Release checklist
 

@@ -1,0 +1,195 @@
+name: BiocJobs
+description: >-
+  Build a package's container image, generate its BiocJobs wrappers inside
+  that image, and lint and test the Galaxy tool with planemo.
+branding:
+  icon: package
+  color: blue
+
+inputs:
+  package-dir:
+    description: Package source directory, relative to the workspace.
+    default: .
+  dockerfile:
+    description: Dockerfile that builds the package image.
+    default: .github/docker/Dockerfile
+  docker-context:
+    description: Build context for the image.
+    default: .
+  image-name:
+    description: >-
+      Image name without a tag. Defaults to ghcr.io/<repository>, lowercased.
+    default: ""
+  image-tag:
+    description: >-
+      Image tag. Defaults to the branch or tag name with characters Docker
+      rejects replaced by "-".
+    default: ""
+  push-image:
+    description: >-
+      Push the image after building it. Skipped for pull requests, whose
+      token cannot write packages.
+    default: "true"
+  registry:
+    description: Registry to log in to before pushing.
+    default: ghcr.io
+  registry-username:
+    description: Registry user.
+    default: ${{ github.actor }}
+  registry-password:
+    description: >-
+      Registry password or token. The default token can push to GHCR when
+      the job grants `packages: write`.
+    default: ${{ github.token }}
+  job-names:
+    description: >-
+      Space-separated job names to generate wrappers for. Empty means every
+      job the package declares.
+    default: ""
+  artifact-name:
+    description: Name of the uploaded wrapper artifact.
+    default: biocjobs-wrappers
+  run-planemo:
+    description: Lint the generated Galaxy tools and run their tests.
+    default: "true"
+  planemo-version:
+    description: planemo version to install.
+    default: "0.75.47"
+  galaxy-branch:
+    description: Galaxy release branch planemo tests against.
+    default: release_26.1
+  python-version:
+    description: Python version for planemo and Galaxy.
+    default: "3.11"
+
+outputs:
+  image:
+    description: >-
+      Image reference written into the wrappers. Digest-pinned when the
+      image was pushed, otherwise name:tag.
+    value: ${{ steps.ref.outputs.image }}
+  wrappers:
+    description: Directory holding the generated wrappers.
+    value: ${{ steps.generate.outputs.dir }}
+
+runs:
+  using: composite
+  steps:
+    - id: plan
+      shell: bash
+      env:
+        NAME: ${{ inputs.image-name }}
+        TAG: ${{ inputs.image-tag }}
+        WANT_PUSH: ${{ inputs.push-image }}
+        EVENT: ${{ github.event_name }}
+      run: |
+        set -euo pipefail
+        # GHCR accepts lowercase names only.
+        name="${NAME:-ghcr.io/${GITHUB_REPOSITORY,,}}"
+        tag=$(printf '%s' "${TAG:-$GITHUB_REF_NAME}" \
+              | tr -c 'A-Za-z0-9._-' '-' | sed -E 's/^[^A-Za-z0-9]+//')
+        if [ -z "$tag" ]; then
+          echo "::error::Cannot derive an image tag from '$GITHUB_REF_NAME'; set image-tag."
+          exit 1
+        fi
+        push=false
+        if [ "$WANT_PUSH" = "true" ] && [ "$EVENT" != "pull_request" ]; then
+          push=true
+        fi
+        {
+          echo "name=$name"
+          echo "tag=$tag"
+          echo "push=$push"
+        } >> "$GITHUB_OUTPUT"
+
+    - uses: docker/login-action@v4
+      if: steps.plan.outputs.push == 'true'
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.registry-username }}
+        password: ${{ inputs.registry-password }}
+
+    - uses: docker/setup-buildx-action@v4
+
+    - uses: docker/build-push-action@v7
+      with:
+        context: ${{ inputs.docker-context }}
+        file: ${{ inputs.dockerfile }}
+        load: true
+        tags: ${{ steps.plan.outputs.name }}:${{ steps.plan.outputs.tag }}
+        labels: |
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - id: ref
+      shell: bash
+      env:
+        NAME: ${{ steps.plan.outputs.name }}
+        IMAGE: ${{ steps.plan.outputs.name }}:${{ steps.plan.outputs.tag }}
+        PUSH: ${{ steps.plan.outputs.push }}
+      run: |
+        set -euo pipefail
+        echo "tagged=$IMAGE" >> "$GITHUB_OUTPUT"
+        if [ "$PUSH" = "true" ]; then
+          docker push "$IMAGE"
+          # Pin the wrappers to the digest so they name exactly this build.
+          digest=$(docker inspect --format '{{join .RepoDigests "\n"}}' "$IMAGE" \
+                   | grep -m1 "^$NAME@")
+          echo "image=$digest" >> "$GITHUB_OUTPUT"
+        else
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+        fi
+
+    - id: generate
+      shell: bash
+      env:
+        IMAGE: ${{ steps.ref.outputs.tagged }}
+        PINNED: ${{ steps.ref.outputs.image }}
+        PACKAGE_DIR: ${{ inputs.package-dir }}
+        JOB_NAMES: ${{ inputs.job-names }}
+        OUT_DIR: ${{ runner.temp }}/biocjobs-wrappers
+      run: |
+        "${{ github.action_path }}/scripts/generate.sh"
+        echo "dir=$OUT_DIR" >> "$GITHUB_OUTPUT"
+
+    - uses: actions/setup-python@v7
+      if: inputs.run-planemo == 'true'
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - if: inputs.run-planemo == 'true'
+      shell: bash
+      run: pip install "planemo==${{ inputs.planemo-version }}"
+
+    - if: inputs.run-planemo == 'true'
+      shell: bash
+      env:
+        WRAPPERS_DIR: ${{ steps.generate.outputs.dir }}
+        GALAXY_BRANCH: ${{ inputs.galaxy-branch }}
+        PYTHON_VERSION: ${{ inputs.python-version }}
+      run: "${{ github.action_path }}/scripts/planemo-test.sh"
+
+    - uses: actions/upload-artifact@v7
+      if: always() && steps.generate.outcome == 'success'
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.generate.outputs.dir }}
+        if-no-files-found: error
+        retention-days: 30
+
+    - if: always() && steps.generate.outcome == 'success'
+      shell: bash
+      env:
+        IMAGE: ${{ steps.ref.outputs.image }}
+        PUSHED: ${{ steps.plan.outputs.push }}
+        ARTIFACT: ${{ inputs.artifact-name }}
+      run: |
+        {
+          echo "| | |"
+          echo "|---|---|"
+          echo "| Image | \`$IMAGE\` |"
+          echo "| Pushed | $PUSHED |"
+          echo "| Wrappers | artifact \`$ARTIFACT\` |"
+        } >> "$GITHUB_STEP_SUMMARY"

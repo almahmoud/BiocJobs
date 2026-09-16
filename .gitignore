@@ -5,9 +5,8 @@
 *.Rcheck/
 *.tar.gz
 *.BiocCheck/
-inst/doc
+BiocJobs/inst/doc
 doc/
 Meta/
 .DS_Store
-.claude/
 __pycache__/

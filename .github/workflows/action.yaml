@@ -1,0 +1,55 @@
+name: action
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - biocjobs-action/**
+      - BiocJobs/**
+      - .github/docker/Dockerfile.toy
+      - .github/workflows/action.yaml
+  pull_request:
+    branches: [main]
+    paths:
+      - biocjobs-action/**
+      - BiocJobs/**
+      - .github/docker/Dockerfile.toy
+      - .github/workflows/action.yaml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: action-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  toy:
+    name: Run the action on the toy package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./biocjobs-action
+        id: biocjobs
+        with:
+          package-dir: BiocJobs/inst/examples/toy
+          dockerfile: .github/docker/Dockerfile.toy
+          docker-context: .
+          image-name: biocjobs-toy
+          push-image: "false"
+
+      - name: Check the outputs
+        env:
+          WRAPPERS: ${{ steps.biocjobs.outputs.wrappers }}
+          IMAGE: ${{ steps.biocjobs.outputs.image }}
+        run: |
+          test -n "$IMAGE"
+          for f in manifest.json toy-normalize/toy-normalize.xml \
+                   toy-normalize/toy-normalize.tes.json \
+                   toy-normalize/toy-normalize.nf toy-normalize/toy-normalize.wdl \
+                   toy-normalize/toy-normalize.sub; do
+            test -f "$WRAPPERS/$f" || { echo "::error::missing $f"; exit 1; }
+          done
+          grep -q "$IMAGE" "$WRAPPERS/toy-normalize/toy-normalize.xml"

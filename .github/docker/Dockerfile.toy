@@ -1,0 +1,8 @@
+# Image for the action self-test: BiocJobs plus its toy example package.
+FROM bioconductor/bioconductor_docker:devel
+
+COPY BiocJobs /src/BiocJobs
+RUN Rscript -e 'remotes::install_deps("/src/BiocJobs", dependencies = NA, upgrade = FALSE)' \
+ && R CMD INSTALL /src/BiocJobs \
+ && R CMD INSTALL /src/BiocJobs/inst/examples/toy \
+ && rm -rf /src

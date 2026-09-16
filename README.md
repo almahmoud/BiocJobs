@@ -465,14 +465,20 @@ option types, one executor per job. On the roadmap:
 
 ## Repository layout
 
+The repository holds two deliverables that will be published separately:
+the R package, submitted to Bioconductor, and the GitHub Action, published
+to the Marketplace. Project-wide documentation and examples live at the top
+level.
+
 | Path | Contents |
 |---|---|
-| [`R/`](R/), [`tests/`](tests/) | the framework package: spec parser/validator, runtime contract, local runner, generators (Galaxy, TES, Nextflow, WDL), manifest, scaffolding, CLI; full testthat suite |
-| [`vignettes/BiocJobs.Rmd`](vignettes/BiocJobs.Rmd) | package vignette: a runnable tour of the whole framework |
+| [`BiocJobs/`](BiocJobs/) | the R package: spec parser and validator, runtime contract, local runner, generators, manifest, scaffolding, CLI, tests and vignette |
+| [`biocjobs-action/`](biocjobs-action/) | the GitHub Action: builds a package's image, generates every wrapper inside it and tests the Galaxy tool with planemo |
 | [`docs/developer-guide.md`](docs/developer-guide.md) | step-by-step guide for package maintainers |
+| [`examples/DESeq2/`](examples/DESeq2/) | worked example: maintainer-authored files under `inst/biocjobs/`, generated artifacts under `generated/` and `exec/`, simulated data under `test-data/`, and the CI workflow that calls the action |
+| [`examples/VariantAnnotation/`](examples/VariantAnnotation/) | second worked example |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | contributor setup, style, and how to add a generator |
-| [`.github/workflows/`](.github/workflows/) | CI: `R CMD check` + `BiocCheck`, artifact regeneration and schema validation, plus `biocjobs-package.yml`, a reusable workflow forks call to build their container, generate wrappers and run a Galaxy/planemo test |
-| [`examples/DESeq2/`](examples/DESeq2/) | the worked example: maintainer-authored files under `inst/biocjobs/`, generated artifacts under `generated/` and `exec/`, simulated data under `test-data/` |
+| [`.github/workflows/`](.github/workflows/) | CI: `R CMD check` + `BiocCheck` on the package, regeneration and schema validation of the example artifacts, and a run of the action against the toy package |
 
 
 ## Try the DESeq2 example
@@ -491,7 +497,7 @@ Clone the repository and run the following commands from the repository root:
 ```bash
 git clone https://github.com/almahmoud/BiocJobs.git
 cd BiocJobs
-R CMD INSTALL .
+R CMD INSTALL BiocJobs
 ```
 
 Validate the example:

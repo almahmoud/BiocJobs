@@ -18,11 +18,9 @@
 * `jobSkeleton()` scaffolds a new job declaration from a template.
 * Command-line interface (`biocjobsCLI()`) exposing discovery, validation,
   local runs and every generator for use in automation.
-* Reusable GitHub Actions workflow (`biocjobs-package.yml`) that a package
-  fork can call to build its container, generate every wrapper inside it,
-  publish them as build artifacts, and lint and test the generated Galaxy
-  tool with planemo. A caller template ships in `inst/templates/`.
-* `--image` on every generator command, so a CI run can pin generated
-  artifacts to the image it just built.
+* `--image` on every generator command, so continuous integration can pin
+  generated artifacts to the image it just built. The companion GitHub
+  Action in the BiocJobs repository does this for a package that declares
+  jobs.
 * Optional interoperation with the BiocExecute framework: jobs declared for
   BiocJobs compile directly into command-line subcommands.

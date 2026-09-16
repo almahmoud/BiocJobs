@@ -15,9 +15,11 @@ Exits the process when non-interactive; otherwise returns
 invisibly.
 }
 \description{
-Entry point for shell-driven use; see the package README for the command
-reference.  Exits the R session with a non-zero status on failure when
-run non-interactively.
+Entry point for shell-driven use, normally invoked as
+\verb{Rscript -e 'BiocJobs::biocjobsCLI()' <command> <pkg> [job] [options]};
+\code{biocjobsCLI("help")} prints the command reference.  Run
+non-interactively it exits the R session with the command's status, so
+the examples below call the underlying functions instead.
 }
 \examples{
 ## The CLI exists for shells and build infrastructure; from R, call the
@@ -34,11 +36,4 @@ length(issues)                        # 0 => the CLI would exit 0
 out <- file.path(tempdir(), "toy_normalize.nf")
 nextflowModule(jobs[[1]], file = out)
 file.exists(out)
-
-\dontrun{
-## From a shell.  Called non-interactively, biocjobsCLI() quits the
-## session with the command's exit status, so it is the whole program:
-##   Rscript -e 'BiocJobs::biocjobsCLI()' validate /path/to/pkg
-biocjobsCLI(c("validate", toy))
-}
 }

@@ -1,0 +1,21 @@
+# Builds the package image, generates the BiocJobs wrappers inside it and
+# tests the Galaxy tool. Wrappers are downloadable from the run's artifacts.
+name: BiocJobs
+
+on:
+  push:
+    branches: [devel, main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  biocjobs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: almahmoud/BiocJobs/biocjobs-action@main
+        with:
+          dockerfile: .github/docker/Dockerfile
