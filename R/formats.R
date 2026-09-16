@@ -42,6 +42,7 @@ jobFormats <- function() {
         "bigwig",    "bigwig",      "bw",       "BigWig signal track",
         "h5",        "h5",          "h5",       "HDF5 container",
         "loom",      "loom",        "loom",     "Loom single-cell matrix (HDF5)",
+        "mtx",       "mtx",         "mtx",      "Matrix Market sparse matrix",
         "tar",       "tar",         "tar",      "tar archive",
         "tar.gz",    "tar.gz",      "tar.gz",   "gzip-compressed tar archive",
         "zip",       "zip",         "zip",      "ZIP archive"
