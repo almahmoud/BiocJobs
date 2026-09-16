@@ -53,6 +53,7 @@ jobs:
             test -f "$WRAPPERS/$f" || { echo "::error::missing $f"; exit 1; }
           done
           grep -q "$IMAGE" "$WRAPPERS/toy-normalize/toy-normalize.xml"
+          test -f "$RUNNER_TEMP/planemo-report.html"
 
   toy-default:
     name: Toy package with the default Dockerfile
@@ -65,3 +66,32 @@ jobs:
           package-dir: BiocJobs/inst/examples/toy
           image-name: biocjobs-toy
           push-image: "false"
+
+  toy-declared:
+    name: Toy package declaring its container
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build an image and declare it in a copy of the toy package
+        run: |
+          docker build -f .github/docker/Dockerfile.toy -t biocjobs-toy-declared:test .
+          cp -R BiocJobs/inst/examples/toy toy-declared
+          echo "container: biocjobs-toy-declared:test" \
+            >> toy-declared/inst/biocjobs/toy-normalize.yaml
+
+      - uses: ./biocjobs-action
+        id: biocjobs
+        with:
+          package-dir: toy-declared
+          image-name: biocjobs-toy
+          push-image: "false"
+          run-planemo: "false"
+
+      - name: Check that nothing was built and the declared container is kept
+        env:
+          WRAPPERS: ${{ steps.biocjobs.outputs.wrappers }}
+          IMAGE: ${{ steps.biocjobs.outputs.image }}
+        run: |
+          test -z "$IMAGE"
+          grep -q "biocjobs-toy-declared:test" "$WRAPPERS/toy-normalize/toy-normalize.xml"

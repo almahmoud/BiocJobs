@@ -594,6 +594,8 @@ jobs:
 The action builds the image itself: your package, every dependency in its
 DESCRIPTION and BiocJobs on `ghcr.io/bioconductor/bioconductor` at the
 branch's Bioconductor version. Pass `dockerfile:` to use your own recipe.
+A job that declares `container:` runs in that image and nothing is built
+for it, unless the declared image is the one the action builds.
 [`examples/DESeq2/.github`](../examples/DESeq2/.github) has the workflow;
 the action's [README](../biocjobs-action/README.md) lists every input.
 
@@ -608,7 +610,9 @@ the action's [README](../biocjobs-action/README.md) lists every input.
 
 For the Galaxy test to run, the job's `tests:` block must reference files
 that exist relative to the package root; the generator stages them next to
-the tool XML. A tool with no staged test data is linted only.
+the tool XML. A tool with no tests is linted only, and missing test files
+fail the run. The run summary lists each tool's result, and planemo's HTML
+report is attached to the run.
 
 ## 11. Release checklist
 

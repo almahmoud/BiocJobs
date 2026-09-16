@@ -41,3 +41,14 @@ resources:
   cpus: 1
   memory_gb: 1
   disk_gb: 1
+
+tests:
+  - inputs:
+      matrix: test-data/matrix.tsv
+    options:
+      method: log2
+    outputs:
+      normalized:
+        file: test-data/normalized.tsv
+        compare: sim_size
+        delta: 20

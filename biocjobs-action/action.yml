@@ -1,7 +1,8 @@
 name: BiocJobs
 description: >-
-  Build a package's container image, generate its BiocJobs wrappers inside
-  that image, and lint and test the Galaxy tool with planemo.
+  Generate a package's BiocJobs wrappers inside its container image, built
+  here unless the jobs declare one, and lint and test the Galaxy tools with
+  planemo.
 branding:
   icon: package
   color: blue
@@ -63,6 +64,11 @@ inputs:
   artifact-name:
     description: Name of the uploaded wrapper artifact.
     default: biocjobs-wrappers
+  report-name:
+    description: >-
+      File name of the planemo HTML report, uploaded unzipped under that
+      name so it opens in the browser. Must be unique within the run.
+    default: planemo-report.html
   run-planemo:
     description: Lint the generated Galaxy tools and run their tests.
     default: "true"
@@ -79,8 +85,9 @@ inputs:
 outputs:
   image:
     description: >-
-      Image reference written into the wrappers. Digest-pinned when the
-      image was pushed, otherwise name:tag.
+      Image built here and written into the wrappers of jobs that declare no
+      container. Digest-pinned when pushed, otherwise name:tag; empty when
+      every job declares its container.
     value: ${{ steps.ref.outputs.image }}
   wrappers:
     description: Directory holding the generated wrappers.
@@ -89,7 +96,22 @@ outputs:
 runs:
   using: composite
   steps:
-    - id: plan
+    - name: Free disk space
+      if: inputs.reclaim-disk == 'true'
+      shell: bash
+      run: |
+        sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
+          /usr/local/share/powershell /usr/local/share/boost \
+          /usr/local/lib/node_modules "${AGENT_TOOLSDIRECTORY:-/opt/hostedtoolcache}"
+        df -h /
+
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Plan the image and jobs
+      id: plan
       shell: bash
       env:
         NAME: ${{ inputs.image-name }}
@@ -100,6 +122,7 @@ runs:
         CONTEXT: ${{ inputs.docker-context }}
         PACKAGE_DIR: ${{ inputs.package-dir }}
         BASE_IMAGE: ${{ inputs.base-image }}
+        JOB_NAMES: ${{ inputs.job-names }}
       run: |
         set -euo pipefail
         base="$BASE_IMAGE"
@@ -120,8 +143,23 @@ runs:
           echo "::error::Cannot derive an image tag from '$GITHUB_REF_NAME'; set image-tag."
           exit 1
         fi
+        # A job that declares its container runs in it; an image is built only
+        # for jobs that declare none, or declare the image built here.
+        python -m pip install --quiet --disable-pip-version-check pyyaml
+        jobs_file="$RUNNER_TEMP/biocjobs-jobs.tsv"
+        # shellcheck disable=SC2086 # job names are space-separated
+        python "$GITHUB_ACTION_PATH/scripts/plan_jobs.py" "$PACKAGE_DIR" "$name" $JOB_NAMES > "$jobs_file"
+        build=false
+        while IFS=$'\t' read -r job image; do
+          if [ -n "$image" ]; then
+            echo "$job: declared container $image"
+          else
+            echo "$job: image built by this action"
+            build=true
+          fi
+        done < "$jobs_file"
         push=false
-        if [ "$WANT_PUSH" = "true" ] && [ "$EVENT" != "pull_request" ]; then
+        if [ "$build" = "true" ] && [ "$WANT_PUSH" = "true" ] && [ "$EVENT" != "pull_request" ]; then
           push=true
         fi
         {
@@ -131,26 +169,25 @@ runs:
           echo "dockerfile=${DOCKERFILE:-$GITHUB_ACTION_PATH/Dockerfile}"
           echo "context=${CONTEXT:-$PACKAGE_DIR}"
           echo "base=$base"
+          echo "build=$build"
+          echo "jobs-file=$jobs_file"
         } >> "$GITHUB_OUTPUT"
 
-    - if: inputs.reclaim-disk == 'true'
-      shell: bash
-      run: |
-        sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
-          /usr/local/share/powershell /usr/local/share/boost \
-          /usr/local/lib/node_modules "${AGENT_TOOLSDIRECTORY:-/opt/hostedtoolcache}"
-        df -h /
-
-    - uses: docker/login-action@v4
+    - name: Log in to the registry
+      uses: docker/login-action@v4
       if: steps.plan.outputs.push == 'true'
       with:
         registry: ${{ inputs.registry }}
         username: ${{ inputs.registry-username }}
         password: ${{ inputs.registry-password }}
 
-    - uses: docker/setup-buildx-action@v4
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+      if: steps.plan.outputs.build == 'true'
 
-    - uses: docker/build-push-action@v7
+    - name: Build the package image
+      uses: docker/build-push-action@v7
+      if: steps.plan.outputs.build == 'true'
       with:
         context: ${{ steps.plan.outputs.context }}
         file: ${{ steps.plan.outputs.dockerfile }}
@@ -163,7 +200,9 @@ runs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - id: ref
+    - name: Push the image and resolve its reference
+      id: ref
+      if: steps.plan.outputs.build == 'true'
       shell: bash
       env:
         NAME: ${{ steps.plan.outputs.name }}
@@ -182,38 +221,34 @@ runs:
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
         fi
 
-    - id: generate
+    - name: Generate wrappers
+      id: generate
       shell: bash
       env:
         IMAGE: ${{ steps.ref.outputs.tagged }}
         PINNED: ${{ steps.ref.outputs.image }}
         PACKAGE_DIR: ${{ inputs.package-dir }}
-        JOB_NAMES: ${{ inputs.job-names }}
+        JOBS_FILE: ${{ steps.plan.outputs.jobs-file }}
         OUT_DIR: ${{ runner.temp }}/biocjobs-wrappers
+        ARTIFACT: ${{ inputs.artifact-name }}
       run: |
         "${{ github.action_path }}/scripts/generate.sh"
         echo "dir=$OUT_DIR" >> "$GITHUB_OUTPUT"
+        {
+          echo "### BiocJobs wrappers"
+          echo
+          echo "| Job | Image |"
+          echo "|---|---|"
+          while IFS=$'\t' read -r job image; do
+            echo "| \`$job\` | \`${image:-$PINNED}\` |"
+          done < "$JOBS_FILE"
+          echo
+          echo "Wrappers are in the \`$ARTIFACT\` artifact."
+          echo
+        } >> "$GITHUB_STEP_SUMMARY"
 
-    - uses: actions/setup-python@v7
-      if: inputs.run-planemo == 'true'
-      with:
-        python-version: ${{ inputs.python-version }}
-
-    - if: inputs.run-planemo == 'true'
-      shell: bash
-      env:
-        PLANEMO_VERSION: ${{ inputs.planemo-version }}
-      run: pip install "planemo==$PLANEMO_VERSION"
-
-    - if: inputs.run-planemo == 'true'
-      shell: bash
-      env:
-        WRAPPERS_DIR: ${{ steps.generate.outputs.dir }}
-        GALAXY_BRANCH: ${{ inputs.galaxy-branch }}
-        PYTHON_VERSION: ${{ inputs.python-version }}
-      run: "${{ github.action_path }}/scripts/planemo-test.sh"
-
-    - uses: actions/upload-artifact@v7
+    - name: Upload wrappers
+      uses: actions/upload-artifact@v7
       if: always() && steps.generate.outcome == 'success'
       with:
         name: ${{ inputs.artifact-name }}
@@ -221,17 +256,28 @@ runs:
         if-no-files-found: error
         retention-days: 30
 
-    - if: always() && steps.generate.outcome == 'success'
+    - name: Install planemo
+      if: inputs.run-planemo == 'true'
       shell: bash
       env:
-        IMAGE: ${{ steps.ref.outputs.image }}
-        PUSHED: ${{ steps.plan.outputs.push }}
-        ARTIFACT: ${{ inputs.artifact-name }}
-      run: |
-        {
-          echo "| | |"
-          echo "|---|---|"
-          echo "| Image | \`$IMAGE\` |"
-          echo "| Pushed | $PUSHED |"
-          echo "| Wrappers | artifact \`$ARTIFACT\` |"
-        } >> "$GITHUB_STEP_SUMMARY"
+        PLANEMO_VERSION: ${{ inputs.planemo-version }}
+      run: pip install "planemo==$PLANEMO_VERSION"
+
+    - name: Lint and test Galaxy tools with planemo
+      id: planemo
+      if: inputs.run-planemo == 'true'
+      shell: bash
+      env:
+        WRAPPERS_DIR: ${{ steps.generate.outputs.dir }}
+        REPORT_HTML: ${{ runner.temp }}/${{ inputs.report-name }}
+        GALAXY_BRANCH: ${{ inputs.galaxy-branch }}
+        PYTHON_VERSION: ${{ inputs.python-version }}
+      run: "${{ github.action_path }}/scripts/planemo-test.sh"
+
+    - name: Upload planemo report
+      uses: actions/upload-artifact@v7
+      if: always() && steps.planemo.outputs.report != ''
+      with:
+        path: ${{ steps.planemo.outputs.report }}
+        archive: false
+        retention-days: 30
