@@ -474,6 +474,7 @@ level.
 |---|---|
 | [`BiocJobs/`](BiocJobs/) | the R package: spec parser and validator, runtime contract, local runner, generators, manifest, scaffolding, CLI, tests and vignette |
 | [`biocjobs-action/`](biocjobs-action/) | the GitHub Action: builds a package's image, generates every wrapper inside it and tests the Galaxy tool with planemo |
+| [`biocjobs-test-galaxy/`](biocjobs-test-galaxy/) | tool wrappers deployed to the test Galaxy at https://testgalaxy.bioconductor.org, with its deploy configuration; its workflows are `.github/workflows/testgalaxy-*.yaml` |
 | [`docs/developer-guide.md`](docs/developer-guide.md) | step-by-step guide for package maintainers |
 | [`examples/DESeq2/`](examples/DESeq2/) | worked example: maintainer-authored files under `inst/biocjobs/`, generated artifacts under `generated/` and `exec/`, simulated data under `test-data/`, and the CI workflow that calls the action |
 | [`examples/VariantAnnotation/`](examples/VariantAnnotation/) | second worked example |

@@ -45,6 +45,7 @@ requests have the `deployed` label.
 With cluster admin credentials:
 
 ```bash
+cd biocjobs-test-galaxy
 kubectl apply -f deploy/namespace-setup.yaml
 deploy/make-kubeconfig.sh
 gh api -X PUT repos/{owner}/{repo}/environments/testgalaxy

@@ -11,6 +11,9 @@ set -euo pipefail
 staging="${1:?usage: collect_tools.sh STAGING_DIR}"
 status_context="testgalaxy/deploy"
 status_creator="github-actions[bot]"
+# Tool paths as the GitHub API reports them, from the repository root.
+tools_path="$(git rev-parse --show-prefix)tools"
+tool_ids() { sed -n "s|^$tools_path/\([^/]*\)/.*|\1|p" | sort -u; }
 
 rm -rf "$staging"
 mkdir -p "$staging/main"
@@ -49,10 +52,10 @@ while read -r number sha; do
   # A pull request branch also holds older copies of tools it did not change, so only
   # take the tools it changed, and skip any that main has changed since it branched.
   changed_on_main="$(gh api "repos/$GITHUB_REPOSITORY/compare/$sha...$DEFAULT_BRANCH" \
-    --jq '.files[].filename' | awk -F/ '$1 == "tools" && NF >= 3 { print $2 }' | sort -u)"
+    --jq '.files[].filename' | tool_ids)"
   changed_in_pr="$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$number/files" \
     --jq '.[] | select(.status != "removed") | .filename' \
-    | awk -F/ '$1 == "tools" && NF >= 3 { print $2 }' | sort -u)"
+    | tool_ids)"
 
   mkdir -p "$staging/pr-$number/tools"
   while read -r tool_id; do
@@ -65,7 +68,7 @@ while read -r number sha; do
       echo "::warning::#$number: skipping $tool_id, which changed on $DEFAULT_BRANCH after the pull request branched"
       continue
     fi
-    if git cat-file -e "$sha:tools/$tool_id" 2>/dev/null; then
+    if git cat-file -e "$sha:./tools/$tool_id" 2>/dev/null; then
       git --literal-pathspecs archive "$sha" "tools/$tool_id" | tar -x --no-same-owner -C "$staging/pr-$number"
     fi
   done <<<"$changed_in_pr"

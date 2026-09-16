@@ -12,13 +12,15 @@ status_context="testgalaxy/deploy"
 galaxy_url="https://testgalaxy.bioconductor.org"
 pr_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
 label="deployed"
+# Tool paths as the GitHub API reports them, from the repository root.
+tools_path="$(git rev-parse --show-prefix)tools"
 
 first_line="$(printf '%s\n' "$COMMENT_BODY" | head -n 1 | tr -d '\r')"
 read -r command argument extra <<<"$first_line" || true
 
 reply() { gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$1" >/dev/null; }
 react() { gh api -X POST "repos/$GITHUB_REPOSITORY/issues/comments/$COMMENT_ID/reactions" -f content="$1" >/dev/null 2>&1 || true; }
-tool_ids() { awk -F/ '$1 == "tools" && NF >= 3 { print $2 }' | sort -u; }
+tool_ids() { sed -n "s|^$tools_path/\([^/]*\)/.*|\1|p" | sort -u; }
 pr_tools() {
   gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$1/files" \
     --jq '.[] | select(.status != "removed") | .filename' | tool_ids
@@ -81,10 +83,10 @@ if [[ "$head" != "$argument"* ]]; then
 fi
 
 outside="$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" \
-  --jq '.[] | .filename, (.previous_filename // empty)' | grep -v '^tools/' | sort -u || true)"
+  --jq '.[] | .filename, (.previous_filename // empty)' | grep -v "^$tools_path/" | sort -u || true)"
 if [ -n "$outside" ]; then
   react "-1"
-  reply "Only pull requests that change nothing outside \`tools/\` can be deployed. This one also changes $(code_list <<<"$outside")."
+  reply "Only pull requests that change nothing outside \`$tools_path/\` can be deployed. This one also changes $(code_list <<<"$outside")."
   exit 0
 fi
 

@@ -21,6 +21,9 @@ jobs:
       issues: write
       pull-requests: write
       statuses: write
+    defaults:
+      run:
+        working-directory: biocjobs-test-galaxy
     outputs:
       reconcile: ${{ steps.handle.outputs.reconcile }}
       action: ${{ steps.handle.outputs.action }}
@@ -50,7 +53,7 @@ jobs:
       issues: write
       pull-requests: write
       statuses: write
-    uses: ./.github/workflows/deploy.yaml
+    uses: ./.github/workflows/testgalaxy-deploy.yaml
     with:
       pr: ${{ github.event.issue.number }}
       reason: ${{ needs.command.outputs.action }}
