@@ -344,7 +344,7 @@ The generated tool is complete: typed parameters (`data`, `select`,
 `boolean`, `integer`/`float` with bounds, `text` with sanitizers and
 validators), outputs with Galaxy datatypes and labels, `<tests>` from the
 specification's test cases, DOI citations, a `bioconductor` xref, and
-bioconda requirements (`bioconductor-<pkg>` plus `bioconductor-biocjobs`)
+a `<container type="docker">` requirement naming the job's image
 that Galaxy resolves to conda environments or mulled BioContainers images.
 
 The tool version follows the IUC convention with the wrapped package version
@@ -653,10 +653,11 @@ along. The targets get there differently:
   `container:` at a purpose-built image — for Bioconductor packages the
   auto-built `quay.io/biocontainers/bioconductor-<pkg>` images are a natural
   base — and the bootstrap disappears.
-- **Galaxy** declares requirements as bioconda packages. Bioconda
-  auto-packages every Bioconductor package as `bioconductor-<name>`, so
-  Galaxy's mulled-container machinery resolves them with no manual packaging
-  work.
+- **Galaxy** declares a `<container type="docker">` requirement naming the
+  same image, so the tool runs in the same environment as every other
+  target. Bioconda package requirements are not emitted for now: they would
+  describe a second, separately-resolved environment, and BiocJobs is not
+  yet on bioconda.
 
 ```{r container}
 job$container            # NULL: the job accepts the default image

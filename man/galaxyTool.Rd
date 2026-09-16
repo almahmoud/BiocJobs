@@ -4,18 +4,29 @@
 \alias{galaxyTool}
 \title{Generate a Galaxy tool wrapper from a job}
 \usage{
-galaxyTool(job, pkg_version = NULL, biocjobs_version = NULL, profile = "23.0")
+galaxyTool(
+  job,
+  pkg_version = NULL,
+  biocjobs_version = NULL,
+  profile = "23.0",
+  image = NULL
+)
 }
 \arguments{
 \item{job}{A \code{BiocJob} object, or path to a job YAML file.}
 
-\item{pkg_version}{Host package version for the bioconda requirement;
+\item{pkg_version}{Host package version, used in the tool version;
 default: read from the package \code{DESCRIPTION} next to the spec, falling
 back to the installed package.}
 
-\item{biocjobs_version}{BiocJobs version for its bioconda requirement.}
+\item{biocjobs_version}{BiocJobs version, retained for reproducibility of
+the generated header.}
 
 \item{profile}{Galaxy tool profile version.}
+
+\item{image}{Container image for the tool's \verb{<container>} requirement;
+defaults to the job's \code{container} field, then to the current
+Bioconductor docker image.}
 }
 \value{
 An \code{xml2::xml_document}.
@@ -25,6 +36,13 @@ Produces a complete Galaxy tool XML document for a job.  Inputs become
 \code{data} params, options become typed params, outputs become \code{data}
 outputs, and tests declared in the specification's \code{tests} section become
 \verb{<test>} cases.
+}
+\details{
+The tool's requirement is a \verb{<container type="docker">} naming the job's
+image, so Galaxy runs the job in the same environment as every other
+target.  Bioconda \verb{<requirement type="package">} entries are not emitted:
+they would describe a second environment resolved separately from the
+container, and BiocJobs is not yet on bioconda.
 }
 \examples{
 toy <- system.file("examples", "toy", package = "BiocJobs")

@@ -3,7 +3,7 @@
 # regenerate with: Rscript -e 'BiocJobs::biocjobsCLI()' htcondor <pkg> deseq2-differential-expression
 
 universe                = container
-container_image         = docker://bioconductor/bioconductor_docker:RELEASE_3_23
+container_image         = docker://ghcr.io/almahmoud/deseq2:devel
 
 executable              = deseq2-differential-expression.sh
 

@@ -387,8 +387,8 @@ Rscript -e 'BiocJobs::biocjobsCLI()' manifest . --out wrappers/manifest.json
 ### Galaxy
 
 Complete tool XML: typed params, sanitizers and validators, outputs with
-datatypes and labels, tests, citations, a `bioconductor` xref, and bioconda
-requirements that Galaxy resolves to conda envs or BioContainers. Tool
+datatypes and labels, tests, citations, a `bioconductor` xref, and a
+`<container type="docker">` requirement naming the job's image. Tool
 version follows IUC convention with your package version leading
 (`1.52.0+biocjobs1.0.0`), so regeneration after a Bioconductor release
 yields a new tool version automatically. Test data is staged beside the
@@ -599,9 +599,17 @@ RUN Rscript -e 'BiocManager::install(c("BiocJobs", "mypackage", "apeglm"), \
                 update = FALSE, ask = FALSE)'
 ```
 
-For Galaxy, requirements are bioconda packages (`bioconductor-<name>`),
-which bioconda generates automatically for every Bioconductor package —
-including, once accepted, BiocJobs itself.
+The container is the entry way for every target, Galaxy included: the
+generated tool's only requirement is a `<container type="docker">` naming
+the same image the TES task, Nextflow module, WDL task and HTCondor submit
+file use. Declaring `container:` in the spec is therefore the single knob
+that controls where a job runs everywhere.
+
+Bioconda `<requirement type="package">` entries are deliberately not emitted
+for now. They would describe a second environment, resolved separately from
+the container and capable of drifting from it, and BiocJobs is not yet on
+bioconda. Once it is, a package-requirement fallback for Galaxy servers
+without container resolvers becomes worth adding.
 
 ## 13. Troubleshooting
 

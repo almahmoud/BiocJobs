@@ -220,9 +220,8 @@ letting a literal `{{...}}` leak into the analysis.
 `float` with bounds), outputs with datatypes and labels, `<tests>` from the
 spec's test cases — with the referenced files staged into a `test-data/`
 directory beside the XML, the layout `planemo test` expects — DOI
-citations, a `bioconductor` xref, and bioconda requirements
-(`bioconductor-<pkg>` + `bioconductor-biocjobs`) that Galaxy resolves to
-conda environments or mulled BioContainers images. Tool versions follow the
+citations, a `bioconductor` xref, and a `<container type="docker">`
+requirement naming the job's image. Tool versions follow the
 IUC convention with the wrapped package version leading
 (`1.52.0+biocjobs1.0.0`), so regenerating after a Bioconductor release
 always produces a new tool version.
@@ -384,15 +383,16 @@ targets get there differently:
   pre-installed (the bootstrap then disappears from generated tasks) — for
   Bioconductor packages, the auto-built
   `quay.io/biocontainers/bioconductor-<pkg>` images are a natural base.
-- **Galaxy**: requirements are declared as bioconda packages. Bioconda
-  auto-packages *every* Bioconductor package as `bioconductor-<name>`, so
-  once BiocJobs is accepted into Bioconductor, `bioconductor-biocjobs`
-  appears automatically and Galaxy's mulled-container machinery resolves the
-  pair with zero manual packaging work.
+- **Galaxy**: the tool's requirement is a `<container type="docker">`
+  naming the same image. Bioconda `<requirement type="package">` entries are
+  not emitted for now: they would describe a second environment resolved
+  separately from the container, and BiocJobs is not yet on bioconda.
 
-Until BiocJobs is in Bioconductor (and therefore on bioconda), runtime
-environments need it installed manually — that is the one bootstrap step
-this proposal asks of the project.
+Because the container is the entry way, a job that declares one needs no
+package resolution at all at run time: the image already holds R, the host
+package and BiocJobs. A job that declares no container falls back to the
+generic Bioconductor image, and only the TES target can repair that gap, by
+prepending a bootstrap executor that installs what is missing.
 
 ## Which packages are good candidates
 

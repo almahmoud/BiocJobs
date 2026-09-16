@@ -16,6 +16,8 @@ version: "1.0.0"
 license: MIT
 script: scripts/deseq2-differential-expression.R
 depends: [apeglm, ashr]   # runtime deps beyond the host package (shrinkage)
+# The container is the entry way: every generated target runs this image.
+container: ghcr.io/almahmoud/deseq2:devel
 
 inputs:
   - name: counts

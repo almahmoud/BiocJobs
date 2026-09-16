@@ -51,15 +51,6 @@
       "command": [
         "Rscript",
         "-e",
-        "missing <- setdiff(c(\"BiocJobs\", \"DESeq2\", \"apeglm\", \"ashr\"), rownames(installed.packages())); if (length(missing)) BiocManager::install(missing, update = FALSE, ask = FALSE)"
-      ],
-      "workdir": "/tmp/biocjob"
-    },
-    {
-      "image": "ghcr.io/almahmoud/deseq2:devel",
-      "command": [
-        "Rscript",
-        "-e",
         "BiocJobs::execJob(\"DESeq2\", \"deseq2-differential-expression\")",
         "--counts",
         "/tmp/biocjob/inputs/counts.tsv",
