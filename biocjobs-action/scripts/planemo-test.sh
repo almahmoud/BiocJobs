@@ -8,7 +8,8 @@
 set -euo pipefail
 
 dir=${WRAPPERS_DIR:?}
-mapfile -t tools < <(find "$dir" -name '*.xml' | sort)
+# Wrappers sit at <job>/<job>.xml; deeper matches would be staged test data.
+mapfile -t tools < <(find "$dir" -mindepth 2 -maxdepth 2 -name '*.xml' | sort)
 if [ "${#tools[@]}" -eq 0 ]; then
     echo "::error::No Galaxy tools under $dir."
     exit 1

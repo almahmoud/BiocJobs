@@ -21,9 +21,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # The Bioconductor devel image ships node24 only; JavaScript actions
-  # still declare the node20 runtime.
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   NXF_ANSI_LOG: false
   # Pinned so a Nextflow release cannot turn a green run red on its own;
   # bump it deliberately.
@@ -38,7 +35,7 @@ jobs:
     container: bioconductor/bioconductor_docker:devel
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Trust the checkout directory
         # The image runs as root while the workspace is owned by the runner
@@ -88,13 +85,15 @@ jobs:
               --out "$EXAMPLE/generated/deseq2_differential_expression.nf"
           Rscript -e 'BiocJobs::biocjobsCLI()' wdl      "$EXAMPLE" "$JOB" \
               --out "$EXAMPLE/generated/deseq2_differential_expression.wdl"
+          Rscript -e 'BiocJobs::biocjobsCLI()' htcondor "$EXAMPLE" "$JOB" \
+              --out "$EXAMPLE/generated/$JOB.sub"
           Rscript -e 'BiocJobs::biocjobsCLI()' manifest "$EXAMPLE" \
               --out "$EXAMPLE/generated/manifest.json"
 
       - name: Validate the Galaxy tool XML against Galaxy's XSD
         run: |
           curl -fsSL -o /tmp/galaxy.xsd \
-              https://raw.githubusercontent.com/galaxyproject/galaxy/dev/lib/galaxy/tool_util/xsd/galaxy.xsd
+              https://raw.githubusercontent.com/galaxyproject/galaxy/release_26.1/lib/galaxy/tool_util/xsd/galaxy.xsd
           xmllint --noout --schema /tmp/galaxy.xsd \
               "$EXAMPLE/generated/deseq2_differential_expression.xml"
 

@@ -87,7 +87,8 @@ runs:
         # GHCR accepts lowercase names only.
         name="${NAME:-ghcr.io/${GITHUB_REPOSITORY,,}}"
         tag=$(printf '%s' "${TAG:-$GITHUB_REF_NAME}" \
-              | tr -c 'A-Za-z0-9._-' '-' | sed -E 's/^[^A-Za-z0-9]+//')
+              | tr -c 'A-Za-z0-9._-' '-' | sed -E 's/^[^A-Za-z0-9_]+//' \
+              | cut -c1-128)
         if [ -z "$tag" ]; then
           echo "::error::Cannot derive an image tag from '$GITHUB_REF_NAME'; set image-tag."
           exit 1
@@ -161,7 +162,9 @@ runs:
 
     - if: inputs.run-planemo == 'true'
       shell: bash
-      run: pip install "planemo==${{ inputs.planemo-version }}"
+      env:
+        PLANEMO_VERSION: ${{ inputs.planemo-version }}
+      run: pip install "planemo==$PLANEMO_VERSION"
 
     - if: inputs.run-planemo == 'true'
       shell: bash

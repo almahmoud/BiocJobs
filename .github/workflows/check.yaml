@@ -16,11 +16,6 @@ concurrency:
   group: check-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # The Bioconductor devel image ships node24 only; JavaScript actions
-  # still declare the node20 runtime.
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   check:
     name: R CMD check + BiocCheck (Bioconductor devel)
@@ -31,7 +26,7 @@ jobs:
         working-directory: BiocJobs
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
@@ -56,7 +51,7 @@ jobs:
 
       - name: Upload check results
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: check-results
           path: BiocJobs/check

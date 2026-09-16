@@ -27,6 +27,10 @@ else
     rscript() { Rscript "$@"; }
 fi
 cli() { rscript -e 'BiocJobs::biocjobsCLI()' "$@"; }
+image_flag=()
+if [ -n "${PINNED:-}" ]; then
+    image_flag=(--image "$PINNED")
+fi
 
 if [ -n "${JOB_NAMES:-}" ]; then
     names=$JOB_NAMES
@@ -53,7 +57,7 @@ for job in $names; do
             htcondor) ext=sub ;;
         esac
         cli "$target" "$pkg" "$job" --out "$out/$job/$job.$ext" \
-            ${PINNED:+--image "$PINNED"}
+            "${image_flag[@]}"
     done
     echo "::endgroup::"
 done
