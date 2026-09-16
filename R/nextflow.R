@@ -44,19 +44,19 @@
 #' Generate a Nextflow DSL2 module from a job
 #'
 #' Produces a self-contained Nextflow module file with one process.
-#' Options become `val` inputs (pass `params.<name>`-style values or channel
-#' values from the calling workflow), and a `stub` block is included so
-#' pipelines can be smoke-tested with `-stub-run`.
+#' Options become `val` inputs (pass `params.<name>`-style values, or
+#' channel values from the calling workflow), and a `stub` block is
+#' included so pipelines can be smoke-tested with `-stub-run`.
 #'
-#' By default the module follows the nf-core convention: the job's file
-#' inputs travel together in one `tuple val(meta), path(...)` input led by a
-#' `meta` map, every output is emitted as `tuple val(meta), path(...)` so
-#' that map flows on to the next process, and the process `tag` is
-#' `${meta.id}`.  Nextflow shows the tag of the most recently launched job
-#' for a process, so it has to identify the unit of work rather than repeat
-#' the process name.  Passing `meta = FALSE` emits plain `path` inputs and
-#' tags with the first input file's name instead, for pipelines that do not
-#' use meta maps.
+#' By default the module follows the nf-core convention: the job's
+#' file inputs travel together in one `tuple val(meta), path(...)`
+#' input led by a `meta` map, every output is emitted as
+#' `tuple val(meta), path(...)` so that map flows on to the next
+#' process, and the process `tag` is `${meta.id}`.  Nextflow shows the
+#' tag of the most recently launched job for a process, so it has to
+#' identify the unit of work rather than repeat the process name.
+#' Passing `meta = FALSE` emits plain `path` inputs and tags with the
+#' first input file's name instead, for pipelines without meta maps.
 #'
 #' @param job A `BiocJob` object, or path to a job YAML file.
 #' @param image Container image; defaults to the job's `container` field,

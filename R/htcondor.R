@@ -43,27 +43,28 @@
 #' Produces an HTCondor submit description file and the executable shell
 #' script it runs.  Declared inputs become `transfer_input_files`, declared
 #' outputs become `transfer_output_files`, `resources` become
-#' `request_cpus`/`request_memory`/`request_disk`, and the job's container
-#' becomes a `container_image` under the container universe.  The script
-#' runs the same self-locating `BiocJobs::execJob()` command every other
-#' target uses.
+#' `request_cpus`/`request_memory`/`request_disk`, and the job's
+#' container becomes a `container_image` under the container universe.  The
+#' script runs the same self-locating `BiocJobs::execJob()` command
+#' that every other target uses.
 #'
-#' HTCondor has no typed parameter surface, so unlike the Galaxy tool or the
-#' WDL task the result is a concrete submission rather than a reusable typed
-#' template.  Option values are written into the script: an option's declared
-#' default where it has one, and otherwise a `{{options.<name>}}` placeholder
-#' in the same convention [tesTask()] uses.  A placeholder that reaches a
-#' running job is rejected by name by [jobParams()], so an unfilled
-#' submission fails immediately rather than analysing the wrong thing.
+#' HTCondor has no typed parameter surface, so unlike the Galaxy tool
+#' or the WDL task the result is a concrete submission rather than a
+#' reusable typed template.  Option values are written into the
+#' script: an option's declared default where it has one, and
+#' otherwise a `{{options.<name>}}` placeholder in the same convention
+#' [tesTask()] uses.  A placeholder reaching a running job is
+#' rejected by name by [jobParams()], so an unfilled submission
+#' fails at once rather than analysing the wrong thing.
 #'
-#' Because HTCondor transfers input files into the job's scratch directory by
-#' basename, the generated script refers to every file by basename.  Point
-#' the `transfer_input_files` line at your own files; their names on the
-#' submit side do not have to match.
+#' Because HTCondor transfers input files into the job's scratch
+#' directory by basename, the generated script refers to every file by
+#' basename.  Point the `transfer_input_files` line at your own files;
+#' their names on the submit side do not have to match.
 #'
 #' The emitted pair is what the \pkg{submitr} package stages and submits to
-#' an HTC submit node, so `submitr::htc_upload()` and `submitr::htc_submit()`
-#' can take these files directly.
+#' an HTC submit node, so `submitr::htc_upload()` and
+#' `submitr::htc_submit()` can take these files directly.
 #'
 #' @param job A `BiocJob` object, or path to a job YAML file.
 #' @param image Container image; defaults to the job's `container` field,
@@ -72,7 +73,8 @@
 #'   `<job>.sub`).  The executable script is written beside it, named by the
 #'   submit file's `executable` line.
 #' @param options Named list of option values; unspecified options fall back
-#'   to their declared defaults, then to a `{{options.<name>}}` placeholder.
+#'   to their declared defaults, then to a `{{options.<name>}}`
+#'   placeholder.
 #' @param queue Number of identical jobs to queue.
 #' @return The submit file text as a character scalar, invisibly when `file`
 #'   is given.
