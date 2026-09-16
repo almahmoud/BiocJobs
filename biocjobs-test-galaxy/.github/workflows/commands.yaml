@@ -1,0 +1,56 @@
+name: Pull request commands
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+jobs:
+  command:
+    name: Handle command
+    if: >-
+      github.event.issue.pull_request &&
+      (startsWith(github.event.comment.body, '/deploy') ||
+       startsWith(github.event.comment.body, '/undeploy') ||
+       startsWith(github.event.comment.body, '/help'))
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      checks: read
+      issues: write
+      pull-requests: write
+      statuses: write
+    outputs:
+      reconcile: ${{ steps.handle.outputs.reconcile }}
+      action: ${{ steps.handle.outputs.action }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Handle command
+        id: handle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+          ACTOR: ${{ github.event.comment.user.login }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: bash .github/scripts/handle_command.sh
+
+  deploy:
+    name: Update test instance
+    needs: command
+    if: needs.command.outputs.reconcile == 'true'
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      statuses: write
+    uses: ./.github/workflows/deploy.yaml
+    with:
+      pr: ${{ github.event.issue.number }}
+      reason: ${{ needs.command.outputs.action }}

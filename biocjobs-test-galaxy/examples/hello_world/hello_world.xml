@@ -1,0 +1,28 @@
+<tool id="hello_world" name="Hello World" version="0.1.0" profile="24.0">
+    <description>write a greeting to a text dataset</description>
+    <requirements>
+        <container type="docker">debian:12-slim</container>
+    </requirements>
+    <command><![CDATA[
+        echo 'Hello, $name' > '$output'
+    ]]></command>
+    <inputs>
+        <param name="name" type="text" value="Bioconductor" label="Name to greet"/>
+    </inputs>
+    <outputs>
+        <data name="output" format="txt" label="Greeting"/>
+    </outputs>
+    <tests>
+        <test>
+            <param name="name" value="World"/>
+            <output name="output">
+                <assert_contents>
+                    <has_text text="Hello, World"/>
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
+    <help><![CDATA[
+Writes a one-line greeting to a text dataset.
+    ]]></help>
+</tool>

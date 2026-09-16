@@ -1,0 +1,6 @@
+*.kubeconfig
+kubeconfig*
+.env
+__pycache__/
+.DS_Store
+tool_test_output.*

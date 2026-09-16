@@ -1,0 +1,176 @@
+name: Deploy to test instance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tools/**"
+      - "deploy/values.yaml"
+      - ".github/scripts/**"
+      - ".github/workflows/deploy.yaml"
+  pull_request_target:
+    types: [synchronize, closed]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      pr:
+        type: string
+        default: ""
+      reason:
+        type: string
+        default: ""
+
+permissions: {}
+
+jobs:
+  gate:
+    name: Check whether to deploy
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: write
+      pull-requests: write
+      statuses: write
+    outputs:
+      deploy: ${{ steps.decide.outputs.deploy }}
+      pr: ${{ steps.decide.outputs.pr }}
+      reason: ${{ steps.decide.outputs.reason }}
+    steps:
+      - name: Decide
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_ACTION: ${{ github.event.action }}
+          WAS_DEPLOYED: ${{ contains(github.event.pull_request.labels.*.name, 'deployed') }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_PR: ${{ github.event.pull_request.number }}
+          INPUT_PR: ${{ inputs.pr }}
+          INPUT_REASON: ${{ inputs.reason }}
+        run: |
+          deploy=false; pr=""; reason=""
+          case "$EVENT_NAME" in
+            pull_request_target)
+              pr="$EVENT_PR"; reason="$PR_ACTION"
+              if [ "$WAS_DEPLOYED" = "true" ]; then
+                deploy=true
+                gh pr edit "$EVENT_PR" --repo "$GITHUB_REPOSITORY" --remove-label deployed >/dev/null
+                if [ "$PR_ACTION" = "closed" ]; then
+                  gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" \
+                    -f state=pending -f context=testgalaxy/deploy \
+                    -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/$EVENT_PR" \
+                    -f description="Removed when the pull request closed" >/dev/null
+                fi
+              fi
+              ;;
+            issue_comment)
+              deploy=true; pr="$INPUT_PR"; reason="$INPUT_REASON"
+              ;;
+            *)
+              deploy=true; reason="$EVENT_NAME"
+              ;;
+          esac
+          {
+            echo "deploy=$deploy"
+            echo "pr=$pr"
+            echo "reason=$reason"
+          } >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy tools
+    needs: gate
+    if: needs.gate.outputs.deploy == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment:
+      name: testgalaxy
+      url: https://testgalaxy.bioconductor.org
+    concurrency:
+      group: testgalaxy-deploy
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      statuses: read
+    env:
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v4.0.5
+
+      - name: Collect tools
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/collect_tools.sh "$RUNNER_TEMP/staging"
+
+      - name: Render Helm values
+        run: |
+          mapfile -t sources < "$RUNNER_TEMP/staging/sources"
+          python3 .github/scripts/render_values.py \
+            --values "$RUNNER_TEMP/tools-values.json" \
+            --manifest "$RUNNER_TEMP/tools.tsv" \
+            --skipped "$RUNNER_TEMP/skipped.tsv" \
+            "${sources[@]}"
+
+      - name: Configure cluster access
+        env:
+          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
+        run: |
+          if [ -z "$KUBECONFIG_CONTENT" ]; then
+            echo "::error::KUBECONFIG is not set in the testgalaxy environment."
+            exit 1
+          fi
+          umask 077
+          printf '%s\n' "$KUBECONFIG_CONTENT" > "$RUNNER_TEMP/kubeconfig"
+          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
+
+      - name: Deploy
+        run: bash .github/scripts/deploy.sh "$RUNNER_TEMP/tools-values.json" "$RUNNER_TEMP/tools.tsv"
+
+      - name: Remove cluster credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/kubeconfig"
+
+      - name: Comment on pull request
+        if: always() && needs.gate.outputs.pr != '' && needs.gate.outputs.reason != 'closed'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.gate.outputs.pr }}
+          REASON: ${{ needs.gate.outputs.reason }}
+          OUTCOME: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          skip_reason=""
+          if [ -f "$RUNNER_TEMP/skipped.tsv" ]; then
+            skip_reason="$(awk -F'\t' -v label="pr-$PR" '$1 == label { print $2 }' "$RUNNER_TEMP/skipped.tsv")"
+          fi
+          if [ "$REASON" = "deploy" ] && [ -n "$skip_reason" ]; then
+            REASON="skipped"
+          fi
+          case "$REASON:$OUTCOME" in
+            skipped:success)     message="Not deployed: $skip_reason." ;;
+            deploy:success)      message="Deployed to https://testgalaxy.bioconductor.org." ;;
+            undeploy:success)    message="Removed from the test instance." ;;
+            synchronize:success) message="New commits were pushed, so this pull request was removed from the test instance. Comment \`/deploy <sha>\` to deploy it again." ;;
+            *)                   message="The deploy failed. See the workflow run." ;;
+          esac
+          {
+            echo "$message"
+            echo
+            if [ "$OUTCOME" = "success" ] && [ -s "$RUNNER_TEMP/tools.tsv" ]; then
+              echo "| Tool | Version | From |"
+              echo "|---|---|---|"
+              while IFS=$'\t' read -r id version source; do
+                case "$source" in pr-*) source="#${source#pr-}" ;; esac
+                echo "| \`$id\` | $version | $source |"
+              done < "$RUNNER_TEMP/tools.tsv"
+              echo
+            fi
+            echo "[Workflow run]($RUN_URL)"
+          } > "$RUNNER_TEMP/comment.md"
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/comment.md"

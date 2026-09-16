@@ -1,0 +1,115 @@
+# Apply once with cluster admin credentials:
+#   kubectl apply -f deploy/namespace-setup.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: testgalaxy
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+---
+# Tool jobs run as the default account and do not need an API token.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: testgalaxy
+automountServiceAccountToken: false
+---
+# Tool jobs may reach the internet but nothing on the cluster network.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tool-jobs
+  namespace: testgalaxy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: galaxy
+      app.kubernetes.io/component: tool
+  policyTypes: [Ingress, Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+              - 100.64.0.0/10
+---
+# Account used by the deploy workflow. It can only manage the Galaxy release in this
+# namespace. It must hold every permission in the chart's own Role to create it.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: galaxy-deployer
+  namespace: testgalaxy
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: galaxy-deployer
+  namespace: testgalaxy
+rules:
+  - apiGroups: [""]
+    resources: [configmaps, secrets, services, serviceaccounts]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch, delete]
+  - apiGroups: [""]
+    resources: [pods/log, events, endpoints, persistentvolumeclaims]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    verbs: [get, list, watch]
+  - apiGroups: [batch, extensions]
+    resources: [jobs, cronjobs]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: ["", networking.k8s.io, extensions]
+    resources: [services, ingresses]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [roles, rolebindings]
+    verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: galaxy-deployer
+  namespace: testgalaxy
+subjects:
+  - kind: ServiceAccount
+    name: galaxy-deployer
+    namespace: testgalaxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: galaxy-deployer
+---
+# To rotate the token, delete this Secret, apply this file again and rerun
+# deploy/make-kubeconfig.sh.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: galaxy-deployer-token
+  namespace: testgalaxy
+  annotations:
+    kubernetes.io/service-account.name: galaxy-deployer
+type: kubernetes.io/service-account-token
