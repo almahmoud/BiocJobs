@@ -18,17 +18,21 @@ jobs:
       - uses: almahmoud/BiocJobs/biocjobs-action@main
 ```
 
-The package's Dockerfile (`.github/docker/Dockerfile` by default) must
-produce an image with R, the package and BiocJobs installed. See
+Without a `dockerfile` input the action builds its own image: the package,
+every dependency in its DESCRIPTION and BiocJobs, on
+`ghcr.io/bioconductor/bioconductor` at the branch's Bioconductor version.
+Supply `dockerfile` for anything else; it must produce an image with R, the
+package and BiocJobs installed. See
 [`examples/DESeq2/.github`](../examples/DESeq2/.github) for a complete
 example.
 
 ## What it does
 
 1. Builds the image and, on pushes, publishes it to the registry.
-2. Runs `BiocJobs::biocjobsCLI()` inside the image: `validate`, then
-   `galaxy`, `tes`, `nextflow`, `wdl`, `htcondor` and `manifest` for every
-   declared job. Wrappers name the image by digest when it was pushed.
+2. Runs `BiocJobs::biocjobsCLI()` inside the image: `validate` once, then
+   `galaxy`, `tes`, `nextflow`, `wdl` and `htcondor` for every declared
+   job, then `manifest` for the package. Wrappers name the image by digest
+   when it was pushed.
 3. Runs `planemo lint` on each Galaxy tool, then `planemo test --docker`
    on those with staged test data. The image is already on the runner, so
    tests run for pull requests too.
@@ -39,8 +43,10 @@ example.
 | Input | Default | Meaning |
 |---|---|---|
 | `package-dir` | `.` | package source directory |
-| `dockerfile` | `.github/docker/Dockerfile` | image recipe |
-| `docker-context` | `.` | build context |
+| `dockerfile` | the action's | image recipe |
+| `docker-context` | `package-dir` | build context |
+| `base-image` | `ghcr.io/bioconductor/bioconductor:<branch>` | base for the action's Dockerfile |
+| `reclaim-disk` | `true` | free runner disk before building |
 | `image-name` | `ghcr.io/<repository>` | image name, lowercased |
 | `image-tag` | branch or tag name | image tag |
 | `push-image` | `true` | push after building; skipped for pull requests |
@@ -76,5 +82,6 @@ example.
 `scripts/generate.sh` uses the host `Rscript` when `IMAGE` is unset:
 
 ```bash
-PACKAGE_DIR=path/to/pkg OUT_DIR=/tmp/wrappers biocjobs-action/scripts/generate.sh
+PACKAGE_DIR=path/to/pkg OUT_DIR=/tmp/wrappers \
+    biocjobs-action/scripts/generate.sh
 ```

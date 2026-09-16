@@ -591,10 +591,11 @@ jobs:
       - uses: almahmoud/BiocJobs/biocjobs-action@main
 ```
 
-and `.github/docker/Dockerfile`, which must install R, your package and
-BiocJobs. [`examples/DESeq2/.github`](../examples/DESeq2/.github) has both
-files; the action's [README](../biocjobs-action/README.md) lists every
-input.
+The action builds the image itself: your package, every dependency in its
+DESCRIPTION and BiocJobs on `ghcr.io/bioconductor/bioconductor` at the
+branch's Bioconductor version. Pass `dockerfile:` to use your own recipe.
+[`examples/DESeq2/.github`](../examples/DESeq2/.github) has the workflow;
+the action's [README](../biocjobs-action/README.md) lists every input.
 
 - Wrappers are build artifacts, not commits, so the repository never
   carries generated files that can go stale.

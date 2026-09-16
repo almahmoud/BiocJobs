@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   toy:
-    name: Run the action on the toy package
+    name: Toy package with a custom Dockerfile
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -53,3 +53,15 @@ jobs:
             test -f "$WRAPPERS/$f" || { echo "::error::missing $f"; exit 1; }
           done
           grep -q "$IMAGE" "$WRAPPERS/toy-normalize/toy-normalize.xml"
+
+  toy-default:
+    name: Toy package with the default Dockerfile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./biocjobs-action
+        with:
+          package-dir: BiocJobs/inst/examples/toy
+          image-name: biocjobs-toy
+          push-image: "false"

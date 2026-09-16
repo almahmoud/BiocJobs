@@ -4,9 +4,15 @@ name: BiocJobs
 
 on:
   push:
-    branches: [devel, main]
+    branches: [devel, RELEASE_*]
   pull_request:
+  schedule:
+    - cron: '17 5 * * 1'   # weekly, so the image follows its base tag
   workflow_dispatch:
+
+concurrency:
+  group: biocjobs-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   biocjobs:
@@ -17,5 +23,3 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: almahmoud/BiocJobs/biocjobs-action@main
-        with:
-          dockerfile: .github/docker/Dockerfile
