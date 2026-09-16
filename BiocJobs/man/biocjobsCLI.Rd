@@ -15,11 +15,9 @@ Exits the process when non-interactive; otherwise returns
 invisibly.
 }
 \description{
-Entry point for shell-driven use, normally invoked as
-\verb{Rscript -e 'BiocJobs::biocjobsCLI()' <command> <pkg> [job] [options]};
-\code{biocjobsCLI("help")} prints the command reference.  Run
-non-interactively it exits the R session with the command's status, so
-the examples below call the underlying functions instead.
+Entry point for shell-driven use; see the package README for the command
+reference.  Exits the R session with a non-zero status on failure when
+run non-interactively.
 }
 \examples{
 ## The CLI exists for shells and build infrastructure; from R, call the

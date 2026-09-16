@@ -83,7 +83,7 @@ execJob <- function(package, job, values = NULL) {
 #' Build the command line for a job
 #'
 #' Returns the argv vector that launches a job with the given parameter
-#' values.  This single builder is used by `runJob()` and by the TES
+#' values.  This single builder is used by `jobManifest()` and by the TES
 #' generator, so all execution paths stay in lockstep.
 #'
 #' Two command styles exist.  `"rscript"` (the default) is self-locating

@@ -364,6 +364,46 @@ validateJob <- function(job) {
     .collectedIssues(collector)
 }
 
+#' The BiocJob object
+#'
+#' A job specification as returned by [readJob()] and
+#' [findJobs()]. It is a list of class `BiocJob`
+#' whose elements are the YAML fields, normalised:
+#'
+#' * `name`: job identifier; `package`: host package.
+#' * `title`, `version` and `script`: single strings.
+#' * `tagline`, `description` and `license`: single strings,
+#'   present only when declared.
+#' * `inputs`: entries with `name` and `format`, plus
+#'   `label`, `help` and `required` when declared. An absent
+#'   section is an empty list.
+#' * `outputs`: entries with `name` and `format`, plus
+#'   `label` and `help` when declared.
+#' * `options`: entries with `name` and `type`, plus
+#'   `label`, `help` and, by type, `default`, `required`,
+#'   `choices`, `min`, `max` and `allow_chars`.
+#' * `resources`: `cpus`, `memory_gb` and `disk_gb`,
+#'   when declared.
+#' * `depends`: R packages the script needs beyond the host package.
+#' * `container`: image reference, or `NULL` for the default
+#'   image.
+#' * `citations`: entries such as `doi`.
+#' * `tests`: declared test cases.
+#' * `_path`: normalised path of the YAML file.
+#'
+#' `format()` and `print()` summarise the interface.
+#'
+#' @name BiocJob
+#' @return A `BiocJob` is a named list with the elements above; this page
+#'   documents the structure, it is not a function.
+#' @examples
+#' toy <- system.file("examples", "toy", package = "BiocJobs")
+#' job <- findJobs(toy)[[1]]
+#' class(job)
+#' names(job)
+#' job
+NULL
+
 #' @export
 print.BiocJob <- function(x, ...) {
     cat("BiocJob '", x$name, "' (package ", x$package, ")\n", sep = "")

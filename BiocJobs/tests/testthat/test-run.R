@@ -24,13 +24,9 @@ test_that("runJob surfaces failing jobs", {
     skip_on_cran()
     ## Missing required input => the child process must fail, and the
     ## declared output is reported as missing.
-    warnings <- character()
-    result <- withCallingHandlers(
-        runJob(toy_job(), params = list(), workdir = tempfile("runfail_")),
-        warning = function(w) {
-            warnings <<- c(warnings, conditionMessage(w))
-            invokeRestart("muffleWarning")
-        })
+    warnings <- testthat::capture_warnings(
+        result <- runJob(toy_job(), params = list(),
+                         workdir = tempfile("runfail_")))
     expect_false(identical(result$status, 0L))
     expect_true(any(grepl("job exited with status", warnings)))
     expect_true(any(grepl("not produced: normalized", warnings)))

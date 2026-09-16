@@ -1,8 +1,9 @@
 ---
 title: "BiocJobs: declaring dispatchable jobs inside a Bioconductor package"
 author:
-- name: Bioconductor Core Team
-  email: maintainer@bioconductor.org
+- name: Alexandru Mahmoud
+  email: almahmoudresearch@gmail.com
+date: "`r format(Sys.Date(), '%d %B %Y')`"
 package: BiocJobs
 abstract: >
   BiocJobs lets a package declare, inside the package itself, the units of
@@ -19,7 +20,7 @@ output:
     toc_float: true
     number_sections: true
 vignette: >
-  %\VignetteIndexEntry{BiocJobs}
+  %\VignetteIndexEntry{Declaring dispatchable jobs with BiocJobs}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -80,6 +81,21 @@ Three principles hold the framework together:
    `Rscript -e 'BiocJobs::execJob("<pkg>", "<job>")' --flag value`, so
    generated artifacts contain no absolute paths and never go stale against
    the installed package version.
+
+BiocJobs is built for Bioconductor packages. Generated artifacts default to
+the `bioconductor/bioconductor_docker` image of the release that
+`BiocManager::version()` reports, the TES bootstrap installs the host
+package and its declared dependencies with `BiocManager`, and discovery and
+validation read only the YAML, so the Bioconductor build system can check
+every package's jobs without installing them.
+
+# Installation
+
+```{r install, eval = FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("BiocJobs")
+```
 
 This vignette uses `toy`, a miniature package shipped inside BiocJobs purely
 to demonstrate and test the framework. It declares one job,

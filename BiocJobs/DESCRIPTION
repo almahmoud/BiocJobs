@@ -2,9 +2,10 @@ Package: BiocJobs
 Title: Declare and Dispatch Batch Jobs from Bioconductor Packages
 Version: 0.99.0
 Authors@R: c(
-    person("Bioconductor", "Core Team",
-           email = "maintainer@bioconductor.org",
-           role = c("aut", "cre")))
+    person("Alexandru", "Mahmoud",
+           email = "almahmoudresearch@gmail.com",
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-3779-492X")))
 Description: A lightweight framework for Bioconductor package developers to
     declare non-interactive, dispatchable units of work ("jobs") inside their
     packages. A job is an R script plus a YAML specification of its inputs,
@@ -31,7 +32,7 @@ Suggests:
     knitr,
     rmarkdown,
     BiocStyle
-biocViews: Infrastructure, Software, ThirdPartyClient, DataImport
+biocViews: Infrastructure, WorkflowManagement, ThirdPartyClient
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3

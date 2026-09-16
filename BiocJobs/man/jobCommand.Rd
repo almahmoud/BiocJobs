@@ -27,7 +27,7 @@ Character vector: the full argv, element one the executable.
 }
 \description{
 Returns the argv vector that launches a job with the given parameter
-values.  This single builder is used by \code{runJob()} and by the TES
+values.  This single builder is used by \code{jobManifest()} and by the TES
 generator, so all execution paths stay in lockstep.
 }
 \details{

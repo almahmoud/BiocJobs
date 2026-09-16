@@ -56,13 +56,6 @@ installed package name.
 #' out <- file.path(tempdir(), "toy_normalize.nf")
 #' nextflowModule(jobs[[1]], file = out)
 #' file.exists(out)
-#'
-#' \dontrun{
-#' ## From a shell.  Called non-interactively, biocjobsCLI() quits the
-#' ## session with the command's exit status, so it is the whole program:
-#' ##   Rscript -e 'BiocJobs::biocjobsCLI()' validate /path/to/pkg
-#' biocjobsCLI(c("validate", toy))
-#' }
 #' @export
 biocjobsCLI <- function(args = commandArgs(trailingOnly = TRUE)) {
     status <- tryCatch(.cliDispatch(args), error = function(e) {

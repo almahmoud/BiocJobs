@@ -4,8 +4,7 @@
 ## options become typed params (boolean/select/text/integer/float), outputs
 ## become `data` outputs, and the command block runs the same canonical
 ## `Rscript -e 'BiocJobs::execJob(...)'` invocation used everywhere else.
-## Requirements name the bioconda packages (`bioconductor-<pkg>`), which
-## Galaxy resolves to conda environments or BioContainers images.
+## The only requirement is a docker container naming the job's image.
 
 ## Walk up from the spec file to the package root (source or installed
 ## layout) to read DESCRIPTION fields at generation time.
