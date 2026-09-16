@@ -15,11 +15,15 @@ commands:
   list     <pkg>                       list jobs declared by a package
   validate <pkg>                       validate all job specs (exit 1 on error)
   manifest <pkg> [--out FILE]          write the package job manifest (JSON)
-  tes      <pkg> <job> [--out FILE]    generate a TES task template (JSON)
+  tes      <pkg> <job> [--out FILE] [--image REF]
+                                       generate a TES task template (JSON)
   galaxy   <pkg> <job> [--out FILE]    generate a Galaxy tool wrapper (XML)
   nextflow <pkg> <job> [--out FILE]    generate a Nextflow DSL2 module
   wdl      <pkg> <job> [--out FILE]    generate a WDL task
   htcondor <pkg> <job> [--out FILE]    generate an HTCondor submit file
+
+--image overrides the container declared in the specification; every
+generator accepts it.
   run      <pkg> <job> [--workdir DIR] [--<param> <value> ...]
                                        run a job locally
 
@@ -144,13 +148,16 @@ biocjobsCLI <- function(args = commandArgs(trailingOnly = TRUE)) {
             jobname <- rest[[1L]]
             opts <- .parseArgv(rest[-1L])
             job <- .cliFindJob(pkg, jobname)
+            ## --image overrides the spec's container for every target, so a
+            ## CI run can point the artifacts at the image it just built.
+            image <- opts$image
             if (identical(command, "tes")) {
-                task <- tesTask(job)
+                task <- tesTask(job, image = image)
                 json <- writeTesTask(task, file = opts$out)
                 if (is.null(opts$out)) cat(json, "\n")
                 else message("wrote ", opts$out)
             } else if (identical(command, "galaxy")) {
-                doc <- galaxyTool(job)
+                doc <- galaxyTool(job, image = image)
                 out <- opts$out %||% paste0(.galaxyToolId(job), ".xml")
                 writeGalaxyTool(doc, out, job = job)
                 message("wrote ", out)
@@ -158,13 +165,14 @@ biocjobsCLI <- function(args = commandArgs(trailingOnly = TRUE)) {
                 ## Writes the submit file and, beside it, the executable
                 ## script the submit file names.
                 out <- opts$out %||% paste0(job$name, ".sub")
-                htcondorSubmit(job, file = out)
-                message("wrote ", out, " and ",
-                        file.path(dirname(out), paste0(job$name, ".sh")))
+                htcondorSubmit(job, image = image, file = out)
+                script <- file.path(dirname(out),
+                                    paste0(job$name, ".sh"))
+                message("wrote ", out, " and ", script)
             } else {
                 generate <- if (identical(command, "nextflow"))
                     nextflowModule else wdlTask
-                text <- generate(job, file = opts$out)
+                text <- generate(job, image = image, file = opts$out)
                 if (is.null(opts$out)) cat(text, "\n")
                 else message("wrote ", opts$out)
             }

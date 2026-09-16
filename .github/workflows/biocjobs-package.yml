@@ -1,0 +1,312 @@
+# Reusable workflow for a Bioconductor package that declares BiocJobs jobs.
+#
+# It builds the package's container, generates the workflow wrappers from the
+# job declarations inside that container, and runs the generated Galaxy tool
+# under a real Galaxy via planemo. Wrappers are published as build artifacts
+# rather than committed, so the repository never carries generated files.
+#
+# Call it from a fork like this:
+#
+#   jobs:
+#     biocjobs:
+#       permissions:            # required here: a called workflow can only
+#         contents: read        # downgrade what the caller grants
+#         packages: write
+#       uses: almahmoud/BiocJobs/.github/workflows/biocjobs-package.yml@main
+#
+name: BiocJobs package
+
+on:
+  workflow_call:
+    inputs:
+      dockerfile:
+        description: Dockerfile that builds the package image.
+        type: string
+        default: .github/docker/Dockerfile
+      docker-context:
+        description: Build context for the image.
+        type: string
+        default: .
+      image-tag:
+        description: Tag for the published image. Defaults to the branch name.
+        type: string
+        default: ""
+      push-image:
+        description: >-
+          Push the image to GHCR. Forced off for pull requests, where the
+          token is read-only.
+        type: boolean
+        default: true
+      job-names:
+        description: >-
+          Space-separated job names to generate wrappers for. Empty means
+          every job the package declares.
+        type: string
+        default: ""
+      run-planemo:
+        description: Lint the generated Galaxy tools, and test them when the image was pushed.
+        type: boolean
+        default: true
+      planemo-version:
+        description: planemo version to install.
+        type: string
+        default: "0.75.47"
+      galaxy-branch:
+        description: Galaxy release branch planemo tests against.
+        type: string
+        default: release_26.1
+      python-version:
+        description: Python used for planemo.
+        type: string
+        default: "3.11"
+    outputs:
+      image:
+        description: Reference to the image that was built.
+        value: ${{ jobs.build.outputs.image }}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # ------------------------------------------------- 1. image and wrappers
+  # These share a job because the generated wrappers are produced inside the
+  # image that was just built. Splitting them would need the image to travel
+  # between runner VMs, which only works once it has been pushed.
+  build:
+    name: Build image and generate wrappers
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.ref.outputs.image }}
+      tagged: ${{ steps.ref.outputs.tagged }}
+      pushed: ${{ steps.plan.outputs.push }}
+    steps:
+      # The github context inside a called workflow belongs to the CALLER, so
+      # this checks out the fork and ghcr.io/${{ github.repository }} names
+      # the fork's own package.
+      - uses: actions/checkout@v7
+
+      - name: Plan the build
+        id: plan
+        env:
+          REQUESTED_TAG: ${{ inputs.image-tag }}
+          WANT_PUSH: ${{ inputs.push-image }}
+        run: |
+          set -euo pipefail
+          # GHCR repository names are lowercase only; Bioconductor package
+          # repositories usually are not.
+          echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          tag="${REQUESTED_TAG:-$GITHUB_REF_NAME}"
+          if ! printf '%s' "$tag" | grep -qE '^[A-Za-z0-9][A-Za-z0-9._-]*$'; then
+            echo "::error::'$tag' is not a usable image tag."
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          # A pull request gets a read-only token, so a push would fail
+          # however the caller set the input.
+          if [ "$WANT_PUSH" = "true" ] \
+             && [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "push=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/login-action@v4
+        if: steps.plan.outputs.push == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/build-push-action@v7
+        id: build
+        with:
+          context: ${{ inputs.docker-context }}
+          file: ${{ inputs.dockerfile }}
+          push: ${{ steps.plan.outputs.push == 'true' }}
+          load: true                       # also keep it on this runner
+          tags: ${{ steps.plan.outputs.name }}:${{ steps.plan.outputs.tag }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Resolve the image reference
+        id: ref
+        env:
+          NAME: ${{ steps.plan.outputs.name }}
+          TAG: ${{ steps.plan.outputs.tag }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          PUSHED: ${{ steps.plan.outputs.push }}
+        run: |
+          set -euo pipefail
+          echo "tagged=$NAME:$TAG" >> "$GITHUB_OUTPUT"
+          # Pin generated artifacts to the digest when the image was pushed,
+          # so a wrapper names the exact image this run produced.
+          if [ "$PUSHED" = "true" ] && [ -n "$DIGEST" ]; then
+            echo "image=$NAME@$DIGEST" >> "$GITHUB_OUTPUT"
+          else
+            echo "image=$NAME:$TAG" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The image already carries R, the package and BiocJobs, so generation
+      # runs inside it and the runner needs no R at all.
+      - name: Generate wrappers for every declared job
+        env:
+          IMAGE: ${{ steps.ref.outputs.tagged }}
+          PINNED: ${{ steps.ref.outputs.image }}
+          ONLY: ${{ inputs.job-names }}
+        run: |
+          set -euo pipefail
+          mkdir -p wrappers
+          run_r() { docker run --rm -v "$PWD:/pkg" -w /pkg "$IMAGE" "$@"; }
+
+          if [ -n "$ONLY" ]; then
+            names="$ONLY"
+          else
+            names=$(run_r Rscript -e \
+              'cat(names(BiocJobs::findJobs(".")), sep = "\n")')
+          fi
+          if [ -z "$names" ]; then
+            echo "::error::No BiocJobs jobs found under inst/biocjobs."
+            exit 1
+          fi
+
+          run_r Rscript -e 'BiocJobs::biocjobsCLI()' validate .
+
+          for job in $names; do
+            echo "::group::$job"
+            out="wrappers/$job"
+            mkdir -p "$out"
+            # --image pins every artifact to the image built by this run.
+            for target in galaxy tes nextflow wdl htcondor; do
+              case "$target" in
+                galaxy)   f="$out/$job.xml" ;;
+                tes)      f="$out/$job.tes.json" ;;
+                nextflow) f="$out/$job.nf" ;;
+                wdl)      f="$out/$job.wdl" ;;
+                htcondor) f="$out/$job.sub" ;;
+              esac
+              run_r Rscript -e 'BiocJobs::biocjobsCLI()' \
+                "$target" . "$job" --out "$f" --image "$PINNED"
+            done
+            echo "::endgroup::"
+          done
+
+          run_r Rscript -e 'BiocJobs::biocjobsCLI()' \
+            manifest . --out wrappers/manifest.json
+          # The container writes as root; hand the tree back to the runner.
+          sudo chown -R "$(id -u):$(id -g)" wrappers
+          find wrappers -type f | sort
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: biocjobs-wrappers
+          path: wrappers/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Summarise
+        run: |
+          {
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Image | \`${{ steps.ref.outputs.image }}\` |"
+            echo "| Pushed to GHCR | ${{ steps.plan.outputs.push }} |"
+            echo "| Wrappers | uploaded as \`biocjobs-wrappers\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------- 2. galaxy
+  galaxy:
+    name: Galaxy tool lint and test
+    needs: build
+    if: inputs.run-planemo
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: biocjobs-wrappers
+          path: wrappers
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install planemo
+        run: pip install "planemo==${{ inputs.planemo-version }}"
+
+      # Linting needs no container, so it runs even for pull requests where
+      # the image could not be pushed.
+      - name: Lint the generated tools
+        run: |
+          set -euo pipefail
+          find wrappers -name '*.xml' -print0 \
+            | xargs -0 -r planemo lint --report_level all --fail_level error
+
+      # Every job runs on a fresh VM and a GHCR package is private by
+      # default, so the registry login has to be repeated here.
+      - uses: docker/login-action@v4
+        if: needs.build.outputs.pushed == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Galaxy silences its own `docker pull`, so an auth failure would
+      # surface only as an opaque job error. Pull here to fail loudly.
+      - name: Pull the tool image
+        if: needs.build.outputs.pushed == 'true'
+        run: docker pull "${{ needs.build.outputs.tagged }}"
+
+      - name: Note that testing needs a pushed image
+        if: needs.build.outputs.pushed != 'true'
+        run: |
+          echo "::warning::The image was not pushed, so the tool cannot be" \
+               "run here. Linting was performed; testing was skipped."
+
+      # --docker runs the tool in the <container> the wrapper declares.
+      # Galaxy's default resolver list tries "explicit" first, so no job
+      # config is needed. Dependency resolution is off because the container
+      # is the entire environment.
+      - name: Test the generated tools
+        if: needs.build.outputs.pushed == 'true'
+        run: |
+          set -euo pipefail
+          status=0
+          for tool in $(find wrappers -name '*.xml' | sort); do
+            job=$(basename "$(dirname "$tool")")
+            # A <tests> block naming a file that was never staged is a hard
+            # failure inside Galaxy, so skip tools that ship no test data.
+            if [ ! -d "$(dirname "$tool")/test-data" ]; then
+              echo "::warning::$job declares no staged test data; skipping."
+              continue
+            fi
+            echo "::group::planemo test $job"
+            planemo test \
+              --docker \
+              --no_dependency_resolution \
+              --no_conda_auto_init \
+              --galaxy_branch "${{ inputs.galaxy-branch }}" \
+              --galaxy_python_version "${{ inputs.python-version }}" \
+              --test_output "wrappers/$job/test-report.html" \
+              --test_output_json "wrappers/$job/test-report.json" \
+              "$tool" || status=$?
+            echo "::endgroup::"
+          done
+          exit $status
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: planemo-test-reports
+          path: |
+            wrappers/**/test-report.html
+            wrappers/**/test-report.json
+          if-no-files-found: ignore
+          retention-days: 30

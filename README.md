@@ -471,7 +471,7 @@ option types, one executor per job. On the roadmap:
 | [`vignettes/BiocJobs.Rmd`](vignettes/BiocJobs.Rmd) | package vignette: a runnable tour of the whole framework |
 | [`docs/developer-guide.md`](docs/developer-guide.md) | step-by-step guide for package maintainers |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | contributor setup, style, and how to add a generator |
-| [`.github/workflows/`](.github/workflows/) | CI: `R CMD check` + `BiocCheck`, plus artifact regeneration and schema validation |
+| [`.github/workflows/`](.github/workflows/) | CI: `R CMD check` + `BiocCheck`, artifact regeneration and schema validation, plus `biocjobs-package.yml`, a reusable workflow forks call to build their container, generate wrappers and run a Galaxy/planemo test |
 | [`examples/DESeq2/`](examples/DESeq2/) | the worked example: maintainer-authored files under `inst/biocjobs/`, generated artifacts under `generated/` and `exec/`, simulated data under `test-data/` |
 
 

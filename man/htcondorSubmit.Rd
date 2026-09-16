@@ -17,7 +17,8 @@ then to the current Bioconductor docker image.}
 submit file's \code{executable} line.}
 
 \item{options}{Named list of option values; unspecified options fall back
-to their declared defaults, then to a \verb{\{\{options.<name>\}\}} placeholder.}
+to their declared defaults, then to a \verb{\{\{options.<name>\}\}}
+placeholder.}
 
 \item{queue}{Number of identical jobs to queue.}
 }
@@ -29,28 +30,29 @@ is given.
 Produces an HTCondor submit description file and the executable shell
 script it runs.  Declared inputs become \code{transfer_input_files}, declared
 outputs become \code{transfer_output_files}, \code{resources} become
-\code{request_cpus}/\code{request_memory}/\code{request_disk}, and the job's container
-becomes a \code{container_image} under the container universe.  The script
-runs the same self-locating \code{BiocJobs::execJob()} command every other
-target uses.
+\code{request_cpus}/\code{request_memory}/\code{request_disk}, and the job's
+container becomes a \code{container_image} under the container universe.  The
+script runs the same self-locating \code{BiocJobs::execJob()} command
+that every other target uses.
 }
 \details{
-HTCondor has no typed parameter surface, so unlike the Galaxy tool or the
-WDL task the result is a concrete submission rather than a reusable typed
-template.  Option values are written into the script: an option's declared
-default where it has one, and otherwise a \verb{\{\{options.<name>\}\}} placeholder
-in the same convention \code{\link[=tesTask]{tesTask()}} uses.  A placeholder that reaches a
-running job is rejected by name by \code{\link[=jobParams]{jobParams()}}, so an unfilled
-submission fails immediately rather than analysing the wrong thing.
+HTCondor has no typed parameter surface, so unlike the Galaxy tool
+or the WDL task the result is a concrete submission rather than a
+reusable typed template.  Option values are written into the
+script: an option's declared default where it has one, and
+otherwise a \verb{\{\{options.<name>\}\}} placeholder in the same convention
+\code{\link[=tesTask]{tesTask()}} uses.  A placeholder reaching a running job is
+rejected by name by \code{\link[=jobParams]{jobParams()}}, so an unfilled submission
+fails at once rather than analysing the wrong thing.
 
-Because HTCondor transfers input files into the job's scratch directory by
-basename, the generated script refers to every file by basename.  Point
-the \code{transfer_input_files} line at your own files; their names on the
-submit side do not have to match.
+Because HTCondor transfers input files into the job's scratch
+directory by basename, the generated script refers to every file by
+basename.  Point the \code{transfer_input_files} line at your own files;
+their names on the submit side do not have to match.
 
 The emitted pair is what the \pkg{submitr} package stages and submits to
-an HTC submit node, so \code{submitr::htc_upload()} and \code{submitr::htc_submit()}
-can take these files directly.
+an HTC submit node, so \code{submitr::htc_upload()} and
+\code{submitr::htc_submit()} can take these files directly.
 }
 \examples{
 toy <- system.file("examples", "toy", package = "BiocJobs")
