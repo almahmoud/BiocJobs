@@ -103,3 +103,20 @@ test_that("unknown formats validate as notes, not errors", {
     expect_false("error" %in% severities)
     expect_true(any(grepl("frobnicated", messages)))
 })
+
+test_that("loom is a known format and maps to the Galaxy datatype", {
+    fmt <- jobFormats()
+    loom <- fmt[fmt$format == "loom", ]
+    expect_identical(nrow(loom), 1L)
+    expect_identical(loom$galaxy, "loom")
+    expect_identical(loom$extension, "loom")
+    ## A spec declaring it validates without the unknown-format note.
+    spec <- toy_spec_list()
+    spec$outputs[[1L]]$format <- "loom"
+    issues <- validateJob(as_job(spec))
+    msgs <- vapply(issues, `[[`, "", "message")
+    expect_false(any(grepl("not in jobFormats", msgs)))
+    ## and the output file gets the right extension.
+    expect_identical(BiocJobs:::.defaultFileName("counts", "loom"),
+                     "counts.loom")
+})
