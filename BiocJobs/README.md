@@ -3,7 +3,7 @@
 Declare non-interactive jobs inside a Bioconductor package and generate,
 from that one declaration, the artifacts workflow systems need to run them:
 Galaxy tool wrappers, GA4GH TES tasks, Nextflow DSL2 modules, WDL tasks,
-HTCondor submit files and a job manifest.
+HTCondor submit files, Kubernetes Jobs and a job manifest.
 
 ## Installation
 

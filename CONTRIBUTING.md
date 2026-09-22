@@ -23,10 +23,8 @@ R CMD INSTALL BiocJobs
 ```
 
 Optional, only needed to check generated artifacts against the tools that
-consume them: `xmllint` (libxml2), `miniwdl` and `nextflow` — CI installs
-these three, so you can also just let CI do it — plus `planemo` if you
-want to lint or run the Galaxy wrapper the way Galaxy's tool developers
-do.
+consume them: `xmllint` (libxml2), `miniwdl`, `nextflow` and `kubeconform`
+(CI installs all four), plus `planemo` to lint or run the Galaxy wrapper.
 
 ## Running the tests
 
@@ -61,6 +59,7 @@ Rscript -e 'BiocJobs::biocjobsCLI()' tes      examples/DESeq2 deseq2-differentia
 Rscript -e 'BiocJobs::biocjobsCLI()' galaxy   examples/DESeq2 deseq2-differential-expression --out examples/DESeq2/generated/deseq2_differential_expression.xml
 Rscript -e 'BiocJobs::biocjobsCLI()' nextflow examples/DESeq2 deseq2-differential-expression --out examples/DESeq2/generated/deseq2_differential_expression.nf
 Rscript -e 'BiocJobs::biocjobsCLI()' wdl      examples/DESeq2 deseq2-differential-expression --out examples/DESeq2/generated/deseq2_differential_expression.wdl
+Rscript -e 'BiocJobs::biocjobsCLI()' kubernetes examples/DESeq2 deseq2-differential-expression --out examples/DESeq2/generated/deseq2-differential-expression.k8s.yaml
 Rscript -e 'BiocJobs::biocjobsCLI()' manifest examples/DESeq2 --out examples/DESeq2/generated/manifest.json
 ```
 
@@ -90,7 +89,8 @@ Three workflows run on every push and pull request to `main`
   against the schema of the system that consumes it: the Galaxy tool XSD
   (`xmllint --schema`), the GA4GH TES 1.1 `tesTask` schema
   (`.github/scripts/validate-tes-task.py`, which also checks the
-  create-task rules), `miniwdl check`, and `nextflow lint`.
+  create-task rules), `miniwdl check`, `nextflow lint`, and
+  `kubeconform -strict` against the Kubernetes 1.34 schemas.
 - **action** — runs `biocjobs-action` against the toy package: builds the
   image from `.github/docker/Dockerfile.toy`, generates every wrapper
   inside it and lints the Galaxy tool with planemo.

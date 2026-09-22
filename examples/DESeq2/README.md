@@ -17,6 +17,7 @@ fields BiocJobs reads at generation time).
 | `generated/test-data/` | test files staged beside the tool XML (planemo layout) | `biocjobsCLI galaxy` |
 | `generated/deseq2_differential_expression.nf` | Nextflow DSL2 module | `biocjobsCLI nextflow` |
 | `generated/deseq2_differential_expression.wdl` | WDL 1.0 task | `biocjobsCLI wdl` |
+| `generated/deseq2-differential-expression.k8s.yaml` | Kubernetes Job template | `biocjobsCLI kubernetes` |
 | `exec/DESeq2.R` | compiled CLI app (one subcommand per job) | `BiocExecute::execCompile()` |
 | `generated/manifest.json` | package job manifest for registry aggregation | `biocjobsCLI manifest` |
 
@@ -28,6 +29,7 @@ Rscript -e 'BiocJobs::biocjobsCLI()' tes      examples/DESeq2 deseq2-differentia
 Rscript -e 'BiocJobs::biocjobsCLI()' galaxy   examples/DESeq2 deseq2-differential-expression --out examples/DESeq2/generated/deseq2_differential_expression.xml
 Rscript -e 'BiocJobs::biocjobsCLI()' nextflow examples/DESeq2 deseq2-differential-expression --out examples/DESeq2/generated/deseq2_differential_expression.nf
 Rscript -e 'BiocJobs::biocjobsCLI()' wdl      examples/DESeq2 deseq2-differential-expression --out examples/DESeq2/generated/deseq2_differential_expression.wdl
+Rscript -e 'BiocJobs::biocjobsCLI()' kubernetes examples/DESeq2 deseq2-differential-expression --out examples/DESeq2/generated/deseq2-differential-expression.k8s.yaml
 Rscript -e 'BiocJobs::biocjobsCLI()' manifest examples/DESeq2 --out examples/DESeq2/generated/manifest.json
 Rscript -e "BiocExecute::execCompile('examples/DESeq2')"
 ```

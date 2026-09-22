@@ -15,6 +15,8 @@
   modules (`nextflowModule()`), WDL 1.0 tasks (`wdlTask()`) and HTCondor
   submit files (`htcondorSubmit()`), plus a per-package job manifest
   (`jobManifest()`) for registry aggregation.
+* Generator for Kubernetes `batch/v1` Jobs (`kubernetesJob()`,
+  `writeKubernetesJob()`) and the matching `kubernetes` CLI command.
 * `jobSkeleton()` scaffolds a new job declaration from a template.
 * Command-line interface (`biocjobsCLI()`) exposing discovery, validation,
   local runs and every generator for use in automation.

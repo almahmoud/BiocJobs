@@ -539,6 +539,24 @@ submitr::htc_upload(files = c("toy-normalize.sub", "toy-normalize.sh"),
 submitr::htc_submit(submit_file = "toy-normalize.sub", config = cfg)
 ```
 
+## Kubernetes
+
+`kubernetesJob()` generates a Kubernetes `batch/v1` Job. Init containers
+download the inputs with `curl` into a shared volume, and the job container
+runs the canonical command with inputs under `/biocjob/inputs` and outputs
+under `/biocjob/outputs`.
+
+```{r kubernetes}
+k8s <- kubernetesJob(job,
+                     inputs = c(matrix = "https://example.org/counts.tsv"),
+                     image = "ghcr.io/example/toy:1.0")
+cat(writeKubernetesJob(k8s))
+```
+
+The image must provide `curl`, BiocJobs and the package; submit the Job
+with `kubectl create -f`. Outputs are lost when the job ends unless `claim`
+names a PersistentVolumeClaim to write them to.
+
 # The manifest and the registry story
 
 `jobManifest()` summarizes every job a package declares — the full typed

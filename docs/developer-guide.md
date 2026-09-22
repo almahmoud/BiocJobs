@@ -84,6 +84,7 @@ From the declaration, BiocJobs **generates**:
 | Nextflow | DSL2 module (`process` with typed inputs, `emit:` outputs, stub) | Nextflow / nf-core pipelines |
 | WDL | task (WDL 1.0, `parameter_meta`, runtime) | Cromwell, miniwdl, Terra, dxWDL |
 | HTCondor | submit description `.sub` + executable `.sh` | `condor_submit`, CHTC via submitr |
+| Kubernetes | `batch/v1` Job (YAML) | `kubectl create`, any Kubernetes cluster |
 | Manifest | JSON summary of all jobs | registry aggregation, build infra |
 | CLI | Rapp application (via BiocExecute) | humans at a shell |
 
@@ -381,6 +382,7 @@ Rscript -e 'BiocJobs::biocjobsCLI()' tes      . my-analysis --out wrappers/my-an
 Rscript -e 'BiocJobs::biocjobsCLI()' nextflow . my-analysis --out wrappers/my_analysis.nf
 Rscript -e 'BiocJobs::biocjobsCLI()' wdl      . my-analysis --out wrappers/my_analysis.wdl
 Rscript -e 'BiocJobs::biocjobsCLI()' htcondor . my-analysis --out wrappers/my-analysis.sub
+Rscript -e 'BiocJobs::biocjobsCLI()' kubernetes . my-analysis --out wrappers/my-analysis.k8s.yaml
 Rscript -e 'BiocJobs::biocjobsCLI()' manifest . --out wrappers/manifest.json
 ```
 
@@ -512,6 +514,47 @@ presets, multi-job manifests or GPU options; use the BiocJobs generator when
 you want the submit file to stay in lockstep with the job declaration that
 also produces the Galaxy, TES, Nextflow and WDL artifacts.
 
+### Kubernetes
+
+A `batch/v1` Job whose pod runs once (`backoffLimit: 0`,
+`restartPolicy: Never`). An init container per input downloads it with
+`curl` into the volume `work`, mounted at `/biocjob`; the `job` container
+runs the canonical command from there with inputs under `/biocjob/inputs`
+and outputs under `/biocjob/outputs`. Both containers use the image from
+`container:` or the `image` argument, which must provide `curl` as well as
+R, BiocJobs and your package; there is no default image.
+
+`resources` map to CPU, memory and `ephemeral-storage` requests, a memory
+limit equal to the request, and the `emptyDir` size limit. The pod mounts no
+service account token and its containers drop all Linux capabilities. It
+does not set `runAsNonRoot`, so namespaces enforcing the `restricted` Pod
+Security Standard reject it; `baseline` admits it.
+
+Required inputs without a URL and required options without a value are
+`{{...}}` placeholders, as in the TES task, and the Job is annotated
+`biocjobs.template: "true"` while any remain. An optional input without a
+URL is left out. From R, supply them when generating:
+
+```r
+job <- BiocJobs::readJob("inst/biocjobs/my-analysis.yaml")
+k8s <- BiocJobs::kubernetesJob(job,
+    inputs = c(input1 = "https://example.org/input1.tsv"),
+    options = list(method = "fast"))
+BiocJobs::writeKubernetesJob(k8s, "my-analysis.k8s.yaml")
+```
+
+The Job is named through `metadata.generateName`, so every submission gets
+a new name. Submit it with `kubectl create`; `kubectl apply` requires a
+fixed name:
+
+```bash
+kubectl create -f my-analysis.k8s.yaml
+```
+
+The `work` volume is an `emptyDir`, lost when the job ends. To keep the
+outputs, pass `claim = "<pvc>"` (`--claim` on the command line) to mount a
+PersistentVolumeClaim instead.
+
 ### Manifest
 
 One JSON per package enumerating every job with its full typed interface,
@@ -638,8 +681,9 @@ report is attached to the run.
 A job needs three things at runtime: R, your package (plus `depends`), and
 BiocJobs. The generated artifacts default to
 `bioconductor/bioconductor_docker:<current release>` — universal, with the
-TES bootstrap installing what's missing at task start (binary installs,
-reasonably fast). For production or heavy use, build a purpose-built image
+TES bootstrap installing what's missing at task start (TES only; binary
+installs, reasonably fast). The Kubernetes Job has no default and requires
+`container:` or an explicit image. For production or heavy use, build a purpose-built image
 and set `container:` in the spec:
 
 ```dockerfile
@@ -650,9 +694,9 @@ RUN Rscript -e 'BiocManager::install(c("BiocJobs", "mypackage", "apeglm"), \
 
 The container is the entry way for every target, Galaxy included: the
 generated tool's only requirement is a `<container type="docker">` naming
-the same image the TES task, Nextflow module, WDL task and HTCondor submit
-file use. Declaring `container:` in the spec therefore controls where a
-job runs on every target.
+the same image the TES task, Nextflow module, WDL task, HTCondor submit
+file and Kubernetes Job use. Declaring `container:` in the spec therefore
+controls where a job runs on every target.
 
 Bioconda `<requirement type="package">` entries are deliberately not emitted
 for now. They would describe a second environment, resolved separately from

@@ -8,6 +8,7 @@ TES](https://github.com/ga4gh/task-execution-schemas) task definitions,
 [Galaxy](https://galaxyproject.org) tool wrappers,
 [Nextflow](https://www.nextflow.io) DSL2 modules,
 [HTCondor](https://htcondor.org) submit files,
+[Kubernetes](https://kubernetes.io) Jobs,
 [WDL](https://openwdl.org) tasks, a machine-readable manifest for registry
 building — and, through [BiocExecute](#a-command-line-via-biocexecute),
 a human-facing command line. One declaration, many execution targets, no
@@ -75,6 +76,7 @@ flowchart LR
     B --> G["Galaxy tool XML<br/>(auto-generated wrapper)"]
     B --> N["Nextflow DSL2 module<br/>(nf pipelines)"]
     B --> H["HTCondor submit file<br/>(condor_submit, CHTC via submitr)"]
+    B --> K["Kubernetes Job<br/>(kubectl create, any cluster)"]
     B --> W["WDL task<br/>(Cromwell, Terra, miniwdl)"]
     B --> M["Package job manifest<br/>(registry aggregation)"]
     B --> C["CLI subcommands<br/>(via BiocExecute/Rapp)"]
@@ -196,6 +198,7 @@ Rscript -e 'BiocJobs::biocjobsCLI()' galaxy   /path/to/pkg my-analysis --out too
 Rscript -e 'BiocJobs::biocjobsCLI()' nextflow /path/to/pkg my-analysis --out module.nf
 Rscript -e 'BiocJobs::biocjobsCLI()' wdl      /path/to/pkg my-analysis --out task.wdl
 Rscript -e 'BiocJobs::biocjobsCLI()' htcondor /path/to/pkg my-analysis --out job.sub
+Rscript -e 'BiocJobs::biocjobsCLI()' kubernetes /path/to/pkg my-analysis --out job.k8s.yaml
 Rscript -e 'BiocJobs::biocjobsCLI()' manifest /path/to/pkg --out manifest.json
 ```
 
@@ -255,6 +258,38 @@ the job's scratch directory by basename, and the script refers to them that
 way. The pair is what the
 [submitr](https://cran.r-project.org/package=submitr) package stages and
 submits to an HTC submit node such as CHTC, so the two compose directly.
+
+**Kubernetes target.** Each job becomes a `batch/v1` Job that runs once:
+init containers download the inputs with `curl`, and the job container runs
+the canonical command. There is no bootstrap step, so the image, set by
+`container:` or `image`, must provide `curl`, BiocJobs and the package.
+The CLI writes a template with `{{...}}` placeholders; fill input URLs and
+options from R instead. From the repository root:
+
+```r
+data <- "https://raw.githubusercontent.com/almahmoud/BiocJobs/main/examples/DESeq2/test-data"
+BiocJobs::kubernetesJob(
+    "examples/DESeq2/inst/biocjobs/deseq2-differential-expression.yaml",
+    inputs = c(counts = file.path(data, "counts.tsv"),
+               coldata = file.path(data, "coldata.tsv")),
+    options = list(contrast_factor = "condition",
+                   contrast_numerator = "treated",
+                   contrast_denominator = "control"),
+    file = "deseq2.k8s.yaml")
+```
+
+The Job gets a generated name, so submit it with `kubectl create`, not
+`kubectl apply`:
+
+```bash
+kubectl create -f deseq2.k8s.yaml
+kubectl get pods -l biocjobs.job=deseq2-differential-expression
+kubectl logs -l biocjobs.job=deseq2-differential-expression -c job --tail=-1
+```
+
+Outputs go to `/biocjob/outputs` on the `work` volume. The default
+`emptyDir` is lost when the job ends; pass `claim = "<pvc>"` (`--claim` on
+the command line) to write to a PersistentVolumeClaim instead.
 
 **Manifest / registry.** `jobManifest()` summarizes every job a package
 declares — full typed interface, resources, container, canonical command —
@@ -337,6 +372,9 @@ pre-filtering, demonstrating every option type in the spec.
   and executes under `-stub-run`.
 - [`generated/deseq2_differential_expression.wdl`](examples/DESeq2/generated/deseq2_differential_expression.wdl)
   — a WDL 1.0 task. Passes `miniwdl check`.
+- [`generated/deseq2-differential-expression.k8s.yaml`](examples/DESeq2/generated/deseq2-differential-expression.k8s.yaml)
+  — a Kubernetes Job template. Passes `kubeconform -strict` against the
+  Kubernetes 1.34 schemas.
 - [`exec/DESeq2.R`](examples/DESeq2/exec/DESeq2.R)
   — the compiled CLI application (BiocExecute), one subcommand per job.
 - [`generated/manifest.json`](examples/DESeq2/generated/manifest.json)
@@ -392,7 +430,8 @@ Because the container is the entry way, a job that declares one needs no
 package resolution at all at run time: the image already holds R, the host
 package and BiocJobs. A job that declares no container falls back to the
 generic Bioconductor image, and only the TES target can repair that gap, by
-prepending a bootstrap executor that installs what is missing.
+prepending a bootstrap executor that installs what is missing. The
+Kubernetes generator refuses to fall back and needs `container:` or `image`.
 
 ## Which packages are good candidates
 
@@ -528,6 +567,7 @@ Rscript -e 'BiocJobs::biocjobsCLI()' galaxy examples/DESeq2 deseq2-differential-
 Rscript -e 'BiocJobs::biocjobsCLI()' nextflow examples/DESeq2 deseq2-differential-expression
 Rscript -e 'BiocJobs::biocjobsCLI()' wdl examples/DESeq2 deseq2-differential-expression
 Rscript -e 'BiocJobs::biocjobsCLI()' htcondor examples/DESeq2 deseq2-differential-expression
+Rscript -e 'BiocJobs::biocjobsCLI()' kubernetes examples/DESeq2 deseq2-differential-expression
 ```
 
 ---
