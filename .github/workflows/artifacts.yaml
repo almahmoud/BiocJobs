@@ -22,9 +22,9 @@ concurrency:
 
 env:
   NXF_ANSI_LOG: false
-  # Pinned so a Nextflow release cannot turn a green run red on its own;
-  # bump it deliberately.
+  # Pinned so a tool release cannot turn a green run red on its own.
   NEXTFLOW_VERSION: "26.04.6"
+  KUBECONFORM_VERSION: "0.8.0"
   EXAMPLE: examples/DESeq2
   JOB: deseq2-differential-expression
 
@@ -67,13 +67,17 @@ jobs:
               "https://github.com/nextflow-io/nextflow/releases/download/v$NEXTFLOW_VERSION/nextflow"
           chmod 0755 /usr/local/bin/nextflow
           nextflow -version
+          curl -fsSL \
+              "https://github.com/yannh/kubeconform/releases/download/v$KUBECONFORM_VERSION/kubeconform-linux-amd64.tar.gz" \
+              | tar -xz -C /usr/local/bin kubeconform
+          kubeconform -v
 
       - name: Regenerate every artifact of the worked example
         # The compiled CLI (exec/DESeq2.R, written by
         # BiocExecute::execCompile()) is deliberately NOT regenerated here:
         # it needs the BiocExecute feat/biocjobs-specs branch, which is not
         # on a release repository. Regenerate it by hand when the job
-        # interface changes, following examples/DESeq2/README.md. The five
+        # interface changes, following examples/DESeq2/README.md. The
         # generators below are pure BiocJobs.
         run: |
           Rscript -e 'BiocJobs::biocjobsCLI()' validate "$EXAMPLE"
@@ -87,6 +91,8 @@ jobs:
               --out "$EXAMPLE/generated/deseq2_differential_expression.wdl"
           Rscript -e 'BiocJobs::biocjobsCLI()' htcondor "$EXAMPLE" "$JOB" \
               --out "$EXAMPLE/generated/$JOB.sub"
+          Rscript -e 'BiocJobs::biocjobsCLI()' kubernetes "$EXAMPLE" "$JOB" \
+              --out "$EXAMPLE/generated/$JOB.k8s.yaml"
           Rscript -e 'BiocJobs::biocjobsCLI()' manifest "$EXAMPLE" \
               --out "$EXAMPLE/generated/manifest.json"
 
@@ -112,6 +118,11 @@ jobs:
       - name: Validate the Nextflow module with nextflow lint
         run: |
           nextflow lint "$EXAMPLE/generated/deseq2_differential_expression.nf"
+
+      - name: Validate the Kubernetes Job with kubeconform
+        run: |
+          kubeconform -strict -summary -kubernetes-version 1.34.0 \
+              "$EXAMPLE/generated/$JOB.k8s.yaml"
 
       - name: Check the manifest is well-formed JSON
         run: |

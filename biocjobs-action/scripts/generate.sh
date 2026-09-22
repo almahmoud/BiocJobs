@@ -99,13 +99,14 @@ for i in "${!names[@]}"; do
         use "${IMAGE:-}"
         [ -z "${PINNED:-}" ] || flags=(--image "$PINNED")
     fi
-    for target in galaxy tes nextflow wdl htcondor; do
+    for target in galaxy tes nextflow wdl htcondor kubernetes; do
         case $target in
-            galaxy)   ext=xml ;;
-            tes)      ext=tes.json ;;
-            nextflow) ext=nf ;;
-            wdl)      ext=wdl ;;
-            htcondor) ext=sub ;;
+            galaxy)     ext=xml ;;
+            tes)        ext=tes.json ;;
+            nextflow)   ext=nf ;;
+            wdl)        ext=wdl ;;
+            htcondor)   ext=sub ;;
+            kubernetes) ext=k8s.yaml ;;
         esac
         cli "$target" "$pkg" "$job" --out "$out/$job/$job.$ext" \
             ${flags[@]+"${flags[@]}"}

@@ -49,7 +49,8 @@ jobs:
           for f in manifest.json toy-normalize/toy-normalize.xml \
                    toy-normalize/toy-normalize.tes.json \
                    toy-normalize/toy-normalize.nf toy-normalize/toy-normalize.wdl \
-                   toy-normalize/toy-normalize.sub; do
+                   toy-normalize/toy-normalize.sub \
+                   toy-normalize/toy-normalize.k8s.yaml; do
             test -f "$WRAPPERS/$f" || { echo "::error::missing $f"; exit 1; }
           done
           grep -q "$IMAGE" "$WRAPPERS/toy-normalize/toy-normalize.xml"

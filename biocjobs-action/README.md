@@ -38,9 +38,9 @@ example.
 1. Builds the image, unless every job declares its container, and on
    pushes publishes it to the registry.
 2. Runs `BiocJobs::biocjobsCLI()` inside the image: `validate` once, then
-   `galaxy`, `tes`, `nextflow`, `wdl` and `htcondor` for every declared
-   job, then `manifest` for the package. Wrappers name the built image by
-   digest when it was pushed.
+   `galaxy`, `tes`, `nextflow`, `wdl`, `htcondor` and `kubernetes` for
+   every declared job, then `manifest` for the package. Wrappers name the
+   built image by digest when it was pushed.
 3. Uploads the wrappers as an artifact.
 4. Runs `planemo lint` on each Galaxy tool, then one `planemo test --docker`
    over the tools that declare tests. The images are already on the runner,
