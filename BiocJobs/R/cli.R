@@ -21,6 +21,8 @@ commands:
   nextflow <pkg> <job> [--out FILE]    generate a Nextflow DSL2 module
   wdl      <pkg> <job> [--out FILE]    generate a WDL task
   htcondor <pkg> <job> [--out FILE]    generate an HTCondor submit file
+  kubernetes <pkg> <job> [--out FILE] [--image REF] [--claim PVC]
+                                       generate a Kubernetes Job (YAML)
 
 --image overrides the container declared in the specification; every
 generator accepts it.
@@ -80,7 +82,7 @@ biocjobsCLI <- function(args = commandArgs(trailingOnly = TRUE)) {
         return(0L)
     }
     if (!command %in% c("list", "validate", "manifest", "tes", "galaxy",
-                        "nextflow", "wdl", "htcondor", "run"))
+                        "nextflow", "wdl", "htcondor", "kubernetes", "run"))
         stop("unknown command '", command, "'")
     if (!length(rest))
         stop("command '", command, "' needs a package argument")
@@ -135,15 +137,20 @@ biocjobsCLI <- function(args = commandArgs(trailingOnly = TRUE)) {
         galaxy = ,
         nextflow = ,
         wdl = ,
-        htcondor = {
+        htcondor = ,
+        kubernetes = {
             if (!length(rest))
                 stop("command '", command, "' needs a job name")
             jobname <- rest[[1L]]
             opts <- .parseArgv(rest[-1L])
-            unknown <- setdiff(names(opts), c("out", "image"))
+            kube <- identical(command, "kubernetes")
+            unknown <- setdiff(names(opts),
+                               c("out", "image", if (kube) "claim"))
             if (length(unknown))
                 stop("'", command, "' does not accept ",
-                     paste0("--", unknown, collapse = ", "))
+                     paste0("--", unknown, collapse = ", "),
+                     if (kube)
+                         "; fill inputs and options with kubernetesJob()")
             job <- .cliFindJob(pkg, jobname)
             ## --image overrides the spec's container for every target, so a
             ## CI run can point the artifacts at the image it just built.
@@ -166,6 +173,11 @@ biocjobsCLI <- function(args = commandArgs(trailingOnly = TRUE)) {
                 script <- file.path(dirname(out),
                                     paste0(job$name, ".sh"))
                 message("wrote ", out, " and ", script)
+            } else if (kube) {
+                k8s <- kubernetesJob(job, image = image, claim = opts$claim)
+                text <- writeKubernetesJob(k8s, file = opts$out)
+                if (is.null(opts$out)) writeLines(text)
+                else message("wrote ", opts$out)
             } else {
                 generate <- if (identical(command, "nextflow"))
                     nextflowModule else wdlTask

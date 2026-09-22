@@ -15,9 +15,11 @@ test_that("discovery, validation and help succeed on the toy package", {
 test_that("every generator writes its --out file", {
     dir <- tempfile("cli_")
     dir.create(dir)
-    for (cmd in c("tes", "galaxy", "nextflow", "wdl", "htcondor")) {
+    for (cmd in c("tes", "galaxy", "nextflow", "wdl", "htcondor",
+                 "kubernetes")) {
         out <- file.path(dir, paste0("toy.", cmd))
-        expect_identical(cli(cmd, toy, "toy-normalize", "--out", out), 0L)
+        expect_identical(cli(cmd, toy, "toy-normalize", "--out", out,
+                             "--image", "example.org/toy:1"), 0L)
         expect_true(file.exists(out), info = cmd)
     }
     manifest <- file.path(dir, "manifest.json")
