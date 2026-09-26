@@ -120,3 +120,12 @@ test_that("loom is a known format and maps to the Galaxy datatype", {
     expect_identical(BiocJobs:::.defaultFileName("counts", "loom"),
                      "counts.loom")
 })
+
+test_that("validateJob rejects a package field that is not a package name", {
+    spec <- toy_spec_list()
+    spec$package <- 'toy"); system("id'
+    issues <- validateJob(as_job(spec))
+    errors <- vapply(issues, `[[`, "", "message")[
+        vapply(issues, `[[`, "", "severity") == "error"]
+    expect_true(any(startsWith(errors, "'package' must match")))
+})

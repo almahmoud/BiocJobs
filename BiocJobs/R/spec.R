@@ -223,6 +223,11 @@ validateJob <- function(job) {
         !grepl("^[a-z0-9][a-z0-9._-]*$", as.character(job$name)))
         add("error", "'name' must match ^[a-z0-9][a-z0-9._-]*$ (got '",
             job$name, "')")
+    ## `package` is written into R code by jobCommand().
+    if (!is.null(job$package) &&
+        !grepl("^[A-Za-z][A-Za-z0-9.]*$", as.character(job$package)))
+        add("error", "'package' must match ^[A-Za-z][A-Za-z0-9.]*$ (got '",
+            job$package, "')")
     ## CLI middle layer: a BiocExecute/Rapp subcommand is the job name with
     ## '-' mapped to '_', which must then be a syntactically valid R name.
     if (!is.null(job$name)) {
