@@ -140,6 +140,10 @@ biocjobsCLI <- function(args = commandArgs(trailingOnly = TRUE)) {
                 stop("command '", command, "' needs a job name")
             jobname <- rest[[1L]]
             opts <- .parseArgv(rest[-1L])
+            unknown <- setdiff(names(opts), c("out", "image"))
+            if (length(unknown))
+                stop("'", command, "' does not accept ",
+                     paste0("--", unknown, collapse = ", "))
             job <- .cliFindJob(pkg, jobname)
             ## --image overrides the spec's container for every target, so a
             ## CI run can point the artifacts at the image it just built.

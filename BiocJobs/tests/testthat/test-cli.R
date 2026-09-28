@@ -43,3 +43,8 @@ test_that("failures are reported as a non-zero status or an error", {
     expect_error(cli("nextflow", toy, "no-such-job"))
     expect_error(cli("frobnicate", toy))
 })
+
+test_that("generators reject options they do not use", {
+    expect_error(cli("galaxy", toy, "toy-normalize", "--matrix", "m.tsv"),
+                 "'galaxy' does not accept --matrix", fixed = TRUE)
+})
