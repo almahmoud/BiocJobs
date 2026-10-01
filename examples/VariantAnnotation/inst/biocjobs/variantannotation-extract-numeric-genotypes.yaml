@@ -74,7 +74,7 @@ tests:
       bed: test-data/Ashkenazim_GIAB_regions.bed
       samples: test-data/Ashkenazim_GIAB_samples.txt
     outputs:
-      genotypes:
+      numeric_genotypes:
         file: test-data/numeric_genotypes.tsv.gz
         compare: sim_size
         delta: 3000
