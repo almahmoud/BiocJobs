@@ -1,33 +1,27 @@
 # BiocJobs developer guide: making your package dispatchable
 
-This guide walks a Bioconductor package maintainer through declaring
-dispatchable jobs in a package, from an empty directory to generated,
-validated wrappers for Galaxy, GA4GH TES, Nextflow, WDL, and an optional
-command-line interface. Every step shows real commands and their output.
-The running example throughout is the DESeq2 declaration shipped in
+This guide takes a package maintainer from an empty `inst/biocjobs/` to
+validated wrappers for Galaxy, GA4GH TES, Nextflow, WDL, HTCondor and
+Kubernetes. Examples use the `jobSkeleton()` template and the DESeq2 job in
 [`examples/DESeq2/`](../examples/DESeq2/).
-
-**The short version.** You add two files under `inst/biocjobs/` — a YAML
-file declaring what your analysis needs, produces, and exposes, and a plain
-R script that does it. Everything else (wrappers, CLIs, registry entries)
-is generated. Nothing else about your package changes.
 
 ## Contents
 
 1. [Concepts](#1-concepts)
 2. [Is my package a good candidate?](#2-is-my-package-a-good-candidate)
-3. [Step 1 — scaffold](#3-step-1--scaffold)
-4. [Step 2 — write the specification](#4-step-2--write-the-specification)
-5. [Step 3 — write the script](#5-step-3--write-the-script)
-6. [Step 4 — run it locally](#6-step-4--run-it-locally)
-7. [Step 5 — validate](#7-step-5--validate)
-8. [Step 6 — declare wrapper tests](#8-step-6--declare-wrapper-tests)
-9. [Step 7 — generate the wrappers](#9-step-7--generate-the-wrappers)
-10. [Step 8 — a command line via BiocExecute (optional)](#10-step-8--a-command-line-via-biocexecute-optional)
-11. [Release checklist](#11-release-checklist)
-12. [Containers](#12-containers)
-13. [Troubleshooting](#13-troubleshooting)
-14. [FAQ](#14-faq)
+3. [Scaffold](#3-scaffold)
+4. [Write the specification](#4-write-the-specification)
+5. [Write the script](#5-write-the-script)
+6. [Run it locally](#6-run-it-locally)
+7. [Validate](#7-validate)
+8. [Declare wrapper tests](#8-declare-wrapper-tests)
+9. [Generate the wrappers](#9-generate-the-wrappers)
+10. [Command-line front ends](#10-command-line-front-ends)
+11. [Continuous integration](#11-continuous-integration)
+12. [Release checklist](#12-release-checklist)
+13. [Containers](#13-containers)
+14. [Troubleshooting](#14-troubleshooting)
+15. [FAQ](#15-faq)
 
 ---
 
@@ -50,10 +44,9 @@ mypackage/
 
 The **specification** declares the job's interface: input files and their
 formats, output files and their formats, typed configuration options,
-resource needs, runtime dependencies, citations, and test cases. It is the
-single source of truth — machine-readable without evaluating any R code,
-which is what lets build infrastructure enumerate and validate every job
-in a tarball safely.
+resource needs, runtime dependencies, citations, and test cases. BiocJobs
+reads it without evaluating R code, so jobs can be listed and validated
+from a package tarball.
 
 The **script** is plain R. Its first line hands control of the interface
 to the specification:
@@ -62,9 +55,9 @@ to the specification:
 params <- BiocJobs::jobParams("mypackage", "my-analysis")
 ```
 
-`jobParams()` parses the command line *against the declaration* — type
+`jobParams()` parses the command line *against the declaration* (type
 coercion, defaults, choice validation, required checks, output directory
-creation — and returns a named list. The rest of the script is analysis
+creation) and returns a named list. The rest of the script is analysis
 code reading `params$<name>`.
 
 The **runtime contract** ties everything together: every input, output,
@@ -81,12 +74,11 @@ From the declaration, BiocJobs **generates**:
 |---|---|---|
 | Galaxy | tool wrapper XML + staged `test-data/` | Galaxy servers, `planemo test` |
 | GA4GH TES | task template JSON | Funnel, TESK, cloud TES endpoints |
-| Nextflow | DSL2 module (`process` with typed inputs, `emit:` outputs, stub) | Nextflow / nf-core pipelines |
-| WDL | task (WDL 1.0, `parameter_meta`, runtime) | Cromwell, miniwdl, Terra, dxWDL |
+| Nextflow | DSL2 module (`process` with `tuple`/`val` inputs, `emit:` outputs, stub) | Nextflow / nf-core pipelines |
+| WDL | task (WDL 1.0, `parameter_meta`, runtime) | WDL 1.0 engines (Cromwell, miniwdl) |
 | HTCondor | submit description `.sub` + executable `.sh` | `condor_submit`, CHTC via submitr |
 | Kubernetes | `batch/v1` Job (YAML) | `kubectl create`, any Kubernetes cluster |
 | Manifest | JSON summary of all jobs | registry aggregation, build infra |
-| CLI | Rapp application (via BiocExecute) | humans at a shell |
 
 ## 2. Is my package a good candidate?
 
@@ -102,15 +94,14 @@ quantification import, batch correction, deconvolution, annotation.
 
 Poor fits: interactive visualization, iterative model tuning with a human
 in the loop, browsers, anything requiring a live R session mid-analysis.
-Packages like that simply don't add `inst/biocjobs/` — opting out is the
-default.
+Packages like that do not add `inst/biocjobs/`.
 
 One package can declare **several** jobs (e.g. one per major workflow), and
 a job does not need to expose everything a function can do: expose the
 parameters that matter for batch use, hard-code sensible choices for the
 rest, and keep the full flexibility in your R API.
 
-## 3. Step 1 — scaffold
+## 3. Scaffold
 
 With BiocJobs installed, from your package source directory:
 
@@ -125,16 +116,15 @@ next: edit both files, then validate with
   Rscript -e 'BiocJobs::biocjobsCLI()' validate .
 ```
 
-The two files are working templates: the YAML demonstrates every
-specification field with comments, and the script demonstrates the
-contract. Existing files are never overwritten (pass `overwrite = TRUE` if
-you mean it).
+The YAML is a valid specification with comments on the common fields, and
+the script shows the `jobParams()` contract. Existing files are kept unless
+`overwrite = TRUE`.
 
-## 4. Step 2 — write the specification
+## 4. Write the specification
 
 The complete field reference. Fields marked *(required)* make
 `validateJob()` fail when absent; everything else has a sensible default
-or is optional.
+or is optional. A job must also declare at least one output.
 
 ### Top level
 
@@ -145,11 +135,11 @@ or is optional.
 | `package` *(required)* | Your package name, exactly as in `DESCRIPTION`. |
 | `title` *(required)* | One line, human-readable. Becomes the Galaxy tool name and CLI title. |
 | `tagline` | Very short description for tool listings (Galaxy `<description>`). |
-| `description` | A paragraph. Reused in every generated artifact's help. |
-| `version` | Job version (semver string). Drives wrapper versioning — bump it whenever the interface or the script's behavior changes. |
-| `license` | SPDX license for generated wrappers (default `MIT`). |
+| `description` | A paragraph. Used in the Galaxy help, the TES task, the WDL `meta` block and the manifest. |
+| `version` | Job version (semver string). Drives wrapper versioning; bump it whenever the interface or the script's behavior changes. |
+| `license` | License of the generated Galaxy tool (SPDX identifier, default `MIT`). |
 | `script` *(required)* | Script path relative to `inst/biocjobs/`. |
-| `depends` | R packages the *script* needs beyond your package and its hard dependencies — typically `Suggests` used at runtime (e.g. `[apeglm, ashr]` for DESeq2's shrinkage options). Drives TES bootstrap installs. |
+| `depends` | R packages the *script* needs beyond your package and its hard dependencies, typically `Suggests` used at runtime (e.g. `[apeglm, ashr]` for DESeq2's shrinkage options). Drives TES bootstrap installs. |
 | `container` | Override the default container image for this job. |
 
 **CLI naming note:** a job name becomes a CLI subcommand by mapping `-` to
@@ -158,7 +148,7 @@ where that mapping produces an invalid R name (e.g. a reserved word like
 `if`, or `2pass-align` after mapping) cannot be exposed by the CLI layer.
 `validateJob()` emits a note when that happens.
 
-### `inputs` — files the job consumes
+### `inputs`: files the job consumes
 
 ```yaml
 inputs:
@@ -173,10 +163,10 @@ inputs:
 
 Run `BiocJobs::jobFormats()` for the format vocabulary (`tsv`, `csv`,
 `rds`, `fasta`, `fastq`, `bam`, `vcf`, `pdf`, ...). Unknown formats are
-allowed — they pass through verbatim to generators — but validation flags
+allowed (they pass through verbatim to generators), but validation flags
 them as notes so typos get caught.
 
-### `outputs` — files the job must produce
+### `outputs`: files the job must produce
 
 ```yaml
 outputs:
@@ -190,7 +180,7 @@ Every declared output **must** be written by the script, to the path in
 `params$<name>`. The local runner warns when a declared output was not
 produced; engines treat it as job failure.
 
-### `options` — typed configuration
+### `options`: typed configuration
 
 ```yaml
 options:
@@ -225,10 +215,9 @@ options:
     label: Pre-filter low-count genes
 ```
 
-Rules worth knowing:
+Rules:
 
-- Every option needs either a `default` or `required: true` — validation
-  enforces this so generated forms are never silently incomplete.
+- Every option needs either a `default` or `required: true`.
 - Inputs, outputs, and options share **one** flag namespace; duplicate
   names across sections are validation errors.
 - `allow_chars` matters for string options holding R formulas: Galaxy's
@@ -239,7 +228,7 @@ Rules worth knowing:
   floats as doubles; choice values are validated against `choices` before
   your script sees them.
 
-### `resources` — scheduling hints
+### `resources`: scheduling hints
 
 ```yaml
 resources:
@@ -248,8 +237,8 @@ resources:
   disk_gb: 10
 ```
 
-These map to TES `resources`, Nextflow `cpus`/`memory`/`disk` directives,
-and WDL `runtime`. Estimate for a typical dataset; engines can override.
+These map to TES `resources`, Nextflow directives, WDL `runtime`, HTCondor
+`request_*` and Kubernetes resource requests. Estimate for a typical dataset; engines can override.
 
 ### `citations`
 
@@ -258,12 +247,12 @@ citations:
   - doi: 10.1186/s13059-014-0550-8
 ```
 
-Rendered as Galaxy `<citations>`; carried in manifests. Cite your method
+Rendered as Galaxy `<citations>`. Cite your method
 paper and the papers behind optional methods your job exposes.
 
-### `tests` — see [Step 6](#8-step-6--declare-wrapper-tests).
+### `tests`: see [Declare wrapper tests](#8-declare-wrapper-tests).
 
-## 5. Step 3 — write the script
+## 5. Write the script
 
 The script template from `jobSkeleton()` shows the contract:
 
@@ -276,7 +265,7 @@ write.table(result, params$output1, sep = "\t",
             quote = FALSE, row.names = FALSE)
 ```
 
-The rules, all of which exist because some engine depends on them:
+Rules for job scripts:
 
 1. **First line is `jobParams()`.** After it returns, every value is typed,
    validated, and defaulted. Do not read `commandArgs()` yourself; do not
@@ -290,25 +279,26 @@ The rules, all of which exist because some engine depends on them:
    never assume a display. `pdf(file)` is fine; `plot()` to a default
    device is not.
 4. **Write every declared output**, exactly to `params$<name>`.
-5. **Log to stderr** with `message()` — engines capture it as the job log.
+5. **Log to stderr** with `message()`; engines capture it as the job log.
    A `sessionInfo()` at the end records the provenance of every run.
 6. **Validate scientific preconditions defensively.** Batch users can't
    see your data structures. The DESeq2 example script is the reference
-   here — it checks, with named errors, for: non-numeric counts, NA cells,
+   here: it checks, with named errors, for: non-numeric counts, NA cells,
    duplicate gene identifiers, samples missing from the annotation, factor
    levels that DESeq2 would silently rename (non-syntactic names), and
    contrast levels that don't exist. Read it before writing yours:
    [`deseq2-differential-expression.R`](../examples/DESeq2/inst/biocjobs/scripts/deseq2-differential-expression.R).
 7. **Read TSV/CSV robustly**: `read.delim(..., quote = "", comment.char = "")`
-   unless your format genuinely uses quoting — a stray `"` in an identifier
-   otherwise swallows rows silently.
-8. Package your script's *extra* runtime dependencies in `depends:` —
-   anything in your package's `Suggests` that the script actually loads.
+   unless the format uses quoting; otherwise a stray `"` in an identifier
+   can swallow rows.
+8. Package your script's *extra* runtime dependencies in `depends:`
+   (anything in your package's `Suggests` that the script loads).
 
-## 6. Step 4 — run it locally
+## 6. Run it locally
 
 The local runner executes the job in a fresh `Rscript` process from your
-source checkout — no installation needed, same contract as production:
+source checkout, with no installation needed and the same contract as
+production:
 
 ```bash
 Rscript -e 'BiocJobs::biocjobsCLI()' run . my-analysis \
@@ -324,11 +314,11 @@ output output1: /tmp/biocjob_1a2b3c/output1.tsv
 Or from R: `runJob(readJob("inst/biocjobs/my-analysis.yaml"),
 params = list(input1 = "..."))`.
 
-Test the failure paths too — a missing required flag, a wrong choice value,
+Test the failure paths too: a missing required flag, a wrong choice value,
 a malformed input file. Each should produce one clear error line, because
 that line is what a Galaxy or Nextflow user will see in their job log.
 
-## 7. Step 5 — validate
+## 7. Validate
 
 ```bash
 Rscript -e 'BiocJobs::biocjobsCLI()' validate .
@@ -344,7 +334,7 @@ among choices, duplicate flag names, missing script, no outputs) make the
 job unusable. **Notes** (no label, unknown format, CLI-incompatible name,
 missing test files) are advisory but worth fixing before release.
 
-## 8. Step 6 — declare wrapper tests
+## 8. Declare wrapper tests
 
 ```yaml
 tests:
@@ -364,16 +354,16 @@ tests:
 ```
 
 These become `<tests>` in the Galaxy wrapper, and the referenced files are
-staged into `test-data/` next to the generated XML — exactly the layout
+staged into `test-data/` next to the generated XML, the layout
 `planemo test` expects. Keep test data tiny (the DESeq2 example simulates
 600 genes × 6 samples with a fixed seed; the generator script is committed
 next to the data). Generate expected outputs by running the job once
-locally and copying the results — then the test pins today's behavior.
+locally and copying the results; the test then pins today's behavior.
 
-## 9. Step 7 — generate the wrappers
+## 9. Generate the wrappers
 
 All generators run from the shell (for CI) or from R. Each regenerates a
-deterministic artifact — commit them or regenerate at release time, but
+deterministic artifact; commit them or regenerate at release time, but
 never hand-edit them.
 
 ```bash
@@ -419,8 +409,6 @@ By default the module follows the nf-core convention: all of the job's file
 inputs travel together in one `tuple val(meta), path(...)` input led by a
 `meta` map, each output is emitted as `tuple val(meta), path(...)` so the
 map flows on to the next process, and the process `tag` is `${meta.id}`.
-Nextflow displays the tag of the most recently launched job for a process,
-so it identifies the unit of work rather than repeating the process name.
 Use it like any module:
 
 ```nextflow
@@ -437,14 +425,10 @@ Pipelines that do not use meta maps can opt out with
 `nextflowModule(job, meta = FALSE)`, which emits plain `path` inputs and
 tags with the first input file's name instead.
 
-The DESeq2 module passes `nextflow lint` with zero warnings and executes
-under `-stub-run` (verified with Nextflow 26.04, and the rendered script
-block is valid bash).
-
 Two things to know about the generated module: process inputs are
 **positional** (Nextflow has no named process-input syntax), so the calling
 workflow must pass the file inputs and then every option, in the order they
-appear in the specification — reordering options in a future spec version
+appear in the specification. Reordering options in a future spec version
 changes the call signature, so bump the job `version:` when you do.  Each
 option is a required `val` with no in-module default (its spec default is
 shown in a comment); supply all of them, typically wired to `params.*` in
@@ -462,6 +446,7 @@ it from a workflow:
 import "my_analysis.wdl" as jobs
 
 workflow analyze {
+    input { File input_file }
     call jobs.my_analysis { input: input1 = input_file, method = "fast" }
 }
 ```
@@ -477,25 +462,21 @@ becomes a `container_image` under the container universe, with a
 `docker://` transport prefix so HTCondor resolves it from the registry
 rather than treating it as a path to a local image file.
 
-HTCondor has no typed parameter surface, so unlike the Galaxy tool or the WDL
-task this is a concrete submission rather than a reusable typed template. The
-closest analogue among the other targets is the TES task, and it uses the same
-convention: an option's declared default is written into the script, and an
-option that is `required` with no default becomes a `{{options.<name>}}`
-placeholder. Fill those in before submitting. If one reaches a running job,
-`jobParams()` rejects it by name, so an unfilled submission fails immediately
-instead of analysing the wrong thing.
+HTCondor has no typed parameters, so the script is a concrete command: each
+option gets its declared default, and a required option without one becomes
+a `{{options.<name>}}` placeholder to fill before submitting. `jobParams()`
+rejects a placeholder that reaches a running job.
 
-One thing to know about HTCondor specifically: transferred inputs land in the
+Transferred inputs land in the
 job's scratch directory **by basename**, so the generated script refers to
 every file by basename. Point `transfer_input_files` at wherever your files
-actually live; their names on the submit side do not have to match.
+live; their names on the submit side do not have to match.
 
 ```bash
 condor_submit my-analysis.sub
 ```
 
-The emitted pair is also exactly what the
+The emitted pair is what the
 [submitr](https://cran.r-project.org/package=submitr) package stages and
 submits to an HTC submit node such as CHTC, so the two compose directly:
 
@@ -508,11 +489,6 @@ submitr::htc_submit(submit_file = "my-analysis.sub", config = cfg)
 submitr::htc_status(cluster_id = ..., config = cfg, watch = TRUE)
 submitr::htc_download(files = "*.tsv", config = cfg, local_path = "results/")
 ```
-
-Use `submitr`'s own `htc_gen_submit()` instead when you want its resource
-presets, multi-job manifests or GPU options; use the BiocJobs generator when
-you want the submit file to stay in lockstep with the job declaration that
-also produces the Galaxy, TES, Nextflow and WDL artifacts.
 
 ### Kubernetes
 
@@ -557,58 +533,33 @@ PersistentVolumeClaim instead.
 
 ### Manifest
 
-One JSON per package enumerating every job with its full typed interface,
-resources, container, and canonical commands. This is the aggregation
-unit: Bioconductor build infrastructure can collect manifests across all
-packages — from tarballs, without executing any package code — into a
-release-wide registry from which all of the above regenerate.
+One JSON document per package listing every job with its typed interface,
+resources, container and command. Build infrastructure can collect
+manifests from tarballs without running package code.
 
-## 10. Step 8 — a command line via BiocExecute (optional)
+## 10. Command-line front ends
 
-[BiocExecute](https://github.com/BiocCodingCollaborations/BiocExecute)
-(with the `feat/biocjobs-specs` branch) turns the same declarations into a
-human-facing CLI. In your package source:
+A command-line front end that parses the arguments itself, for example a
+[Rapp](https://cran.r-project.org/package=Rapp) application, hands the
+parsed values to `execJob()`:
 
 ```r
-BiocExecute::execCompile()      # reads inst/biocjobs/, writes exec/<Package>.R
+BiocJobs::execJob("mypackage", "my-analysis",
+                  values = list(input1 = "data.tsv", method = "fast"))
 ```
 
-Each job becomes a subcommand of one Rapp application named after your
-package. After the package is installed, users put the launcher on their
-PATH once:
+The script's `jobParams()` call then uses these values instead of the
+command line, so required options, choice membership, bounds and file
+existence are checked against the specification, with the same error
+messages as on every other target. Values of `NULL` or `NA` count as not
+supplied.
 
-```r
-BiocExecute::execInstall("mypackage")
-```
+A front end that exposes each job as a subcommand maps `-` in the job name
+to `_` for the R name and back for display; `cliJobName()` returns the
+token, and `jobCommand(job, values, style = "cli")` builds the
+`<Package> <job> --flag value` command line for such a launcher.
 
-and then, at any shell:
-
-```
-$ DESeq2 --help
-Usage: DESeq2 <COMMAND>
-Commands:
-  deseq2-differential-expression  DESeq2 differential expression
-
-$ DESeq2 deseq2-differential-expression \
-      --counts counts.tsv --coldata coldata.tsv \
-      --contrast_factor condition --contrast_numerator treated \
-      --contrast_denominator control --alpha 0.05
-...
-significant genes at padj < 0.05: 43
-```
-
-`--help` text, option types, and defaults all come from your YAML. At run
-time the subcommand hands the parsed values to
-`BiocJobs::execJob(values = ...)`, so the *same* validation that guards
-Galaxy and TES runs guards the CLI: required options, choice membership,
-bounds, and file existence are enforced by the specification, with the
-same error messages.
-
-Commit the compiled `exec/<Package>.R` like any generated artifact and
-re-run `execCompile()` when specs change. Add `BiocJobs` (and optionally
-`BiocExecute`) to your `Suggests:`.
-
-## 10b. Continuous integration
+## 11. Continuous integration
 
 The repository ships a GitHub Action, `biocjobs-action`, that builds your
 package's container image, generates every wrapper inside it, uploads the
@@ -621,7 +572,7 @@ Add `.github/workflows/biocjobs.yml` to your package:
 name: BiocJobs
 on:
   push:
-    branches: [devel, main]
+    branches: [devel, RELEASE_*]
   pull_request:
 jobs:
   biocjobs:
@@ -642,8 +593,8 @@ for it, unless the declared image is the one the action builds.
 [`examples/DESeq2/.github`](../examples/DESeq2/.github) has the workflow;
 the action's [README](../biocjobs-action/README.md) lists every input.
 
-- Wrappers are build artifacts, not commits, so the repository never
-  carries generated files that can go stale.
+- Wrappers are uploaded as a build artifact; nothing is committed to your
+  repository.
 - Generation runs inside the built image, so the runner installs no R.
   Each wrapper names that image, by digest once it has been pushed.
 - Pull requests cannot push the image, but the Galaxy test still runs
@@ -657,34 +608,30 @@ the tool XML. A tool with no tests is linted only, and missing test files
 fail the run. The run summary lists each tool's result, and planemo's HTML
 report is attached to the run.
 
-## 11. Release checklist
+## 12. Release checklist
 
 - [ ] `Rscript -e 'BiocJobs::biocjobsCLI()' validate .` exits 0, ideally in CI
 - [ ] Job runs end-to-end locally on the committed test data
 - [ ] Failure paths produce single, clear error lines
 - [ ] `version:` bumped if the interface or behavior changed
-- [ ] Artifacts regenerated (`galaxy`, `tes`, `nextflow`, `wdl`, `manifest`,
-      and `execCompile()` if you ship a CLI)
+- [ ] Artifacts regenerated (`galaxy`, `tes`, `nextflow`, `wdl`, `htcondor`,
+      `kubernetes`, `manifest`)
 - [ ] Generated Galaxy XML passes `planemo lint`, WDL passes
       `miniwdl check`, Nextflow module passes `nextflow lint`
 - [ ] `DESCRIPTION` has `Suggests: BiocJobs`
 - [ ] Test data is small, deterministic (fixed seed), and its generator
       script is committed
-- [ ] Regenerated artifacts are committed together with the change.
-      Generated files record the BiocJobs version that produced them, so
-      upgrading BiocJobs makes committed artifacts stale; regenerate and
-      commit them in the same change (BiocJobs' own CI enforces this for
-      the DESeq2 example)
+- [ ] If you commit generated artifacts, regenerate them in the same
+      change: they record the BiocJobs version that produced them
 
-## 12. Containers
+## 13. Containers
 
 A job needs three things at runtime: R, your package (plus `depends`), and
-BiocJobs. The generated artifacts default to
-`bioconductor/bioconductor_docker:<current release>` — universal, with the
-TES bootstrap installing what's missing at task start (TES only; binary
-installs, reasonably fast). The Kubernetes Job has no default and requires
-`container:` or an explicit image. For production or heavy use, build a purpose-built image
-and set `container:` in the spec:
+BiocJobs. Generated artifacts default to
+`bioconductor/bioconductor_docker:<current release>`; on that image the TES
+task first installs what is missing. The Kubernetes Job has no default and
+needs `container:` or `image`. For production, build an image with
+everything installed and set `container:`:
 
 ```dockerfile
 FROM bioconductor/bioconductor_docker:RELEASE_3_23
@@ -698,42 +645,38 @@ the same image the TES task, Nextflow module, WDL task, HTCondor submit
 file and Kubernetes Job use. Declaring `container:` in the spec therefore
 controls where a job runs on every target.
 
-Bioconda `<requirement type="package">` entries are deliberately not emitted
-for now. They would describe a second environment, resolved separately from
-the container and capable of drifting from it, and BiocJobs is not yet on
-bioconda. Once it is, a package-requirement fallback for Galaxy servers
-without container resolvers becomes worth adding.
+Galaxy tools declare only the container, not Bioconda package requirements.
 
-## 13. Troubleshooting
+## 14. Troubleshooting
 
 | Symptom | Cause / fix |
 |---|---|
 | `package 'X' is not installed or ships no biocjobs/ directory` | Your package isn't installed and `BIOCJOBS_SPEC` isn't set. `runJob()` and the CLI `run` command set it for you; when invoking a script directly during development, `export BIOCJOBS_SPEC=inst/biocjobs/<job>.yaml`. |
 | `unknown parameter(s): --foo` | Flag not declared in the spec. The error lists every declared flag. |
 | `option --x: 'y' is not one of: ...` | Value outside `choices`. Fix the caller, or extend `choices`. |
-| `missing required input --counts` | Required input not supplied — inputs are required unless `required: false`. |
-| `unfilled template placeholder(s): --contrast_factor {{options.contrast_factor}}` | A TES template was submitted without filling its placeholders. |
+| `missing required input --counts` | Required input not supplied; inputs are required unless `required: false`. |
+| `unfilled template placeholder(s): --contrast_factor {{options.contrast_factor}}` | A generated TES, HTCondor or Kubernetes template ran with unfilled placeholders. |
 | `declared output(s) not produced: results` | Script exited 0 but didn't write an output. Write every declared output or fail loudly. |
 | `invalid job specification ... needs either a 'default' or 'required: true'` | Every option must be resolvable: give it a default or mark it required. |
 | Galaxy strips `~` from my formula option | Declare `allow_chars: ["~"]` on that option and regenerate. |
 | `'name' cannot be exposed as a CLI subcommand` (note) | The name maps to an invalid R identifier (e.g. a reserved word). Rename the job if you want a CLI. |
 | Generated Galaxy test can't find files | Test file paths are relative to the package root and must exist at generation time; the generator stages them next to the XML. |
 
-## 14. FAQ
+## 15. FAQ
 
-**My package is interactive — should I force a job anyway?** No. Jobs are
+**My package is interactive. Should I force a job anyway?** No. Jobs are
 for batch-shaped work. If some core computation *inside* the interactive
 flow is batch-shaped (fit a model, score a matrix), consider exposing just
 that.
 
-**Can one package declare several jobs?** Yes — one YAML + script pair per
+**Can one package declare several jobs?** Yes: one YAML and script pair per
 job. Names share a namespace within the package.
 
 **Multiple files per input? Collections?** Not in spec 1.0. Workarounds:
-accept an archive (`format: tar`, `tar.gz` or `zip` — all in
-`jobFormats()` — and unpack it in the script) or a directory-listing TSV. Multi-file inputs are on the roadmap.
+accept an archive (`format: tar`, `tar.gz` or `zip`, all in
+`jobFormats()`, and unpack it in the script) or a directory-listing TSV. Multi-file inputs are on the roadmap.
 
-**Where do defaults live — spec or script?** Spec, always. The script must
+**Where do defaults live, spec or script?** Spec, always. The script must
 not re-default anything; the generated UIs show the spec's defaults, and a
 script that overrides them silently misleads users.
 
@@ -743,7 +686,7 @@ the spec's `depends` only adds runtime-loaded extras.
 
 **Do I commit generated artifacts?** Either commit them (reviewable diffs,
 consumable directly from your repo) or regenerate in CI at release time.
-Never edit them by hand — they carry a generated-by header for a reason.
+Never edit them by hand.
 
 **How does this relate to writing a Galaxy wrapper / nf-core module by
 hand?** Hand-written wrappers can be richer (conditionals, collections,
@@ -754,20 +697,11 @@ the tested baseline.
 
 ---
 
-*The complete worked example — spec, script, test data, and all six
-generated artifacts — lives in [`examples/DESeq2/`](../examples/DESeq2/).
-The [README](../README.md) covers the framework design and rationale, and
+*The complete worked example (spec, script, test data and the generated
+artifacts) lives in [`examples/DESeq2/`](../examples/DESeq2/).
+The [README](../README.md) gives an overview, and
 `vignette("BiocJobs")` is a shorter runnable tour of the same ground.*
 
 *This guide is for maintainers **using** BiocJobs in their own package. To
-contribute to BiocJobs itself — a new generator, a spec change, a bug fix —
+contribute to BiocJobs itself (a new generator, a spec change, a bug fix),
 see [CONTRIBUTING.md](../CONTRIBUTING.md).*
-
----
-
-## Documentation status
-
-This documentation was drafted with AI assistance and has not yet been fully
-reviewed. It may be inaccurate or out of date in places until every claim has
-been checked against the implementation. Treat it as provisional while this
-notice is present; it will be removed once the review is complete.
