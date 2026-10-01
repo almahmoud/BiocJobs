@@ -55,7 +55,7 @@ example.
 | `package-dir` | `.` | package source directory |
 | `dockerfile` | the action's | image recipe |
 | `docker-context` | `package-dir` | build context |
-| `base-image` | `ghcr.io/bioconductor/bioconductor:<branch>` | base for the action's Dockerfile |
+| `base-image` | `ghcr.io/bioconductor/bioconductor:<branch>` for devel and RELEASE_x_y branches, otherwise `:devel` | base for the action's Dockerfile |
 | `reclaim-disk` | `true` | free runner disk before building |
 | `image-name` | `ghcr.io/<repository>` | image name, lowercased |
 | `image-tag` | branch or tag name | image tag |
@@ -94,6 +94,9 @@ example.
 `scripts/generate.sh` uses the host `Rscript` when `IMAGE` is unset:
 
 ```bash
-PACKAGE_DIR=path/to/pkg OUT_DIR=/tmp/wrappers \
+PACKAGE_DIR=path/to/pkg OUT_DIR=/tmp/wrappers PINNED=example.org/pkg:dev \
     biocjobs-action/scripts/generate.sh
 ```
+
+`PINNED` names the image written into the wrappers; the Kubernetes
+generator needs one for jobs that declare no container.
