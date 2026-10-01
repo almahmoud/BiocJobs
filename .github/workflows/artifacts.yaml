@@ -24,7 +24,9 @@ env:
   NXF_ANSI_LOG: false
   # Pinned so a tool release cannot turn a green run red on its own.
   NEXTFLOW_VERSION: "26.04.6"
+  NEXTFLOW_SHA256: 61a755edbed743cfbb568f3a6c67af68481a2f6a4d6dffcc4295e51318968281
   KUBECONFORM_VERSION: "0.8.0"
+  KUBECONFORM_SHA256: 9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883
   EXAMPLE: examples/DESeq2
   JOB: deseq2-differential-expression
 
@@ -65,11 +67,13 @@ jobs:
           /opt/validators/bin/pip install --quiet jsonschema pyyaml miniwdl
           curl -fsSL -o /usr/local/bin/nextflow \
               "https://github.com/nextflow-io/nextflow/releases/download/v$NEXTFLOW_VERSION/nextflow"
+          echo "$NEXTFLOW_SHA256  /usr/local/bin/nextflow" | sha256sum -c -
           chmod 0755 /usr/local/bin/nextflow
           nextflow -version
-          curl -fsSL \
-              "https://github.com/yannh/kubeconform/releases/download/v$KUBECONFORM_VERSION/kubeconform-linux-amd64.tar.gz" \
-              | tar -xz -C /usr/local/bin kubeconform
+          curl -fsSL -o /tmp/kubeconform.tar.gz \
+              "https://github.com/yannh/kubeconform/releases/download/v$KUBECONFORM_VERSION/kubeconform-linux-amd64.tar.gz"
+          echo "$KUBECONFORM_SHA256  /tmp/kubeconform.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/kubeconform.tar.gz -C /usr/local/bin kubeconform
           kubeconform -v
 
       - name: Regenerate every artifact of the worked example
