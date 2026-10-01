@@ -34,7 +34,7 @@
 readJob <- function(path, validate = TRUE) {
     if (!file.exists(path))
         stop("job specification not found: ", path)
-    spec <- yaml::read_yaml(path)
+    spec <- yaml::read_yaml(path, eval.expr = FALSE)
     if (!is.list(spec))
         stop("job specification is not a YAML mapping: ", path)
     spec[["_path"]] <- normalizePath(path)

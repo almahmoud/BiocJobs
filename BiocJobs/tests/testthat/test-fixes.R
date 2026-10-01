@@ -168,3 +168,13 @@ test_that("generators refuse package and job names that are not plain names", {
     spec$name <- "toy'; id #"
     expect_error(jobCommand(as_job(spec)), "'name' must match", fixed = TRUE)
 })
+
+test_that("readJob does not evaluate !expr tags", {
+    old <- options(yaml.eval.expr = TRUE)
+    on.exit(options(old))
+    path <- tempfile(fileext = ".yaml")
+    writeLines(c(readLines(toy_yaml()), "extra: !expr stop('evaluated')"),
+               path)
+    job <- readJob(path, validate = FALSE)
+    expect_type(job$extra, "character")
+})
