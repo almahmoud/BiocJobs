@@ -122,8 +122,8 @@
 #' ## which inputs a submission must provide.
 #' cat(head(lines, 23), sep = "\n")
 #'
-#' ## Constraints the WDL type system cannot express -- choices, bounds,
-#' ## formats, help text -- ride along in parameter_meta.
+#' ## Constraints the WDL type system cannot express: choices, bounds,
+#' ## formats and help text ride along in parameter_meta.
 #' grep("One of:|Format:", lines, value = TRUE)
 #'
 #' path <- file.path(tempdir(), "toy_normalize.wdl")

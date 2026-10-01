@@ -11,13 +11,13 @@ biocjobsCLI(args = commandArgs(trailingOnly = TRUE))
 \code{commandArgs(trailingOnly = TRUE)}.}
 }
 \value{
-Exits the process when non-interactive; otherwise returns
-invisibly.
+The exit status (0 or 1), invisibly, in an interactive session;
+otherwise quits R with that status.
 }
 \description{
-Entry point for shell-driven use; see the package README for the command
-reference.  Exits the R session with a non-zero status on failure when
-run non-interactively.
+Entry point for shell-driven use; \code{biocjobsCLI("help")} prints the
+command reference.  Exits the R session with a non-zero status on
+failure when run non-interactively.
 }
 \examples{
 ## The CLI exists for shells and build infrastructure; from R, call the

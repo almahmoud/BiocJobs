@@ -1,7 +1,7 @@
 ## The canonical invocation.
 ##
-## Every execution target (local run, TES task, Galaxy wrapper) launches a
-## job with the same self-locating command:
+## Every generated artifact launches a job with the same self-locating
+## command:
 ##
 ##     Rscript -e 'BiocJobs::execJob("<package>", "<job>")' --name value ...
 ##
@@ -11,7 +11,7 @@
 
 #' Execute a job from an installed package
 #'
-#' The canonical entry point used by generated TES tasks and Galaxy wrappers.
+#' The entry point every generated artifact runs.
 #' Locates the job's script inside the installed host package and runs it.
 #' Command-line arguments after the `-e` expression are consumed by the
 #' script's `jobParams()` call.
@@ -21,9 +21,8 @@
 #' hand its parameter values over directly via `values`; the script's
 #' `jobParams()` call then uses them instead of re-parsing
 #' `commandArgs()`.
-#' Values of `NULL`, `NA` or `""` count as "not
-#' supplied", so defaults and required-parameter checks behave exactly
-#' as on the command line.
+#' Values of `NULL` or `NA` count as not supplied, so defaults and
+#' required-parameter checks behave as for absent command-line flags.
 #'
 #' @param package Name of the installed host package.
 #' @param job Job name as declared in the specification.
@@ -60,17 +59,12 @@
 execJob <- function(package, job, values = NULL) {
     spec <- .locateSpec(package, job)
     script <- jobScript(spec)
-    ## Let jobParams() inside the script resolve the same spec even when the
-    ## override mechanism was used to find it.  The hand-over is in-process
-    ## (no environment variable to leak into unrelated children) and the
-    ## caller's active spec is restored, so nested execJob() calls stack.
+    ## Hand the resolved spec to jobParams() in the script; restore the
+    ## caller's on exit so nested calls stack.
     previous_spec <- .activeSpec()
     .setActiveSpec(spec)
     on.exit(.setActiveSpec(previous_spec), add = TRUE)
     if (!is.null(values)) {
-        ## Save/restore (not clear-on-exit) so nested execJob() calls stack
-        ## correctly; jobParams() consumes the values, so the restore only
-        ## matters for an outer frame that had its own pending values.
         previous_values <- .suppliedValues()
         .setSuppliedValues(values)
         on.exit(.setSuppliedValues(previous_values), add = TRUE)
@@ -83,8 +77,7 @@ execJob <- function(package, job, values = NULL) {
 #' Build the command line for a job
 #'
 #' Returns the argv vector that launches a job with the given parameter
-#' values.  This single builder is used by `jobManifest()` and by the TES
-#' generator, so all execution paths stay in lockstep.
+#' values.  `tesTask()`, `kubernetesJob()` and `jobManifest()` embed it.
 #'
 #' Two command styles exist.  `"rscript"` (the default) is self-locating
 #' and works in any environment with R and the packages installed; it is
@@ -137,7 +130,6 @@ jobCommand <- function(job, params = list(), rscript = "Rscript",
     argv
 }
 
-
 #' CLI token of a job under a BiocExecute/Rapp launcher
 #'
 #' A job compiled into a BiocExecute/Rapp application becomes a subcommand
@@ -181,7 +173,7 @@ cliJobName <- function(job) {
 #'   `outputs` (named vector of absolute paths to declared outputs).
 #' @examples
 #' ## The development loop: edit the script, run it against real data,
-#' ## straight from the source checkout -- nothing needs to be installed.
+#' ## straight from the source checkout; nothing needs to be installed.
 #' toy <- system.file("examples", "toy", package = "BiocJobs")
 #' job <- readJob(file.path(toy, "inst", "biocjobs", "toy-normalize.yaml"))
 #'

@@ -23,9 +23,9 @@ files.
 \description{
 Creates \verb{inst/biocjobs/<name>.yaml} and
 \verb{inst/biocjobs/scripts/<name>.R} in a package source tree, pre-filled
-with a commented template that
-demonstrates every specification field and the \code{jobParams()} script
-contract.  Nothing is overwritten unless \code{overwrite = TRUE}.
+with a commented template of the common specification fields and the
+\code{jobParams()} script contract.  Nothing is overwritten unless
+\code{overwrite = TRUE}.
 }
 \examples{
 ## Stand in for a package source tree (normally this is your own

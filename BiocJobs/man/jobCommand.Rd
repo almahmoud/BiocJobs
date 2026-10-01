@@ -27,8 +27,7 @@ Character vector: the full argv, element one the executable.
 }
 \description{
 Returns the argv vector that launches a job with the given parameter
-values.  This single builder is used by \code{jobManifest()} and by the TES
-generator, so all execution paths stay in lockstep.
+values.  \code{tesTask()}, \code{kubernetesJob()} and \code{jobManifest()} embed it.
 }
 \details{
 Two command styles exist.  \code{"rscript"} (the default) is self-locating

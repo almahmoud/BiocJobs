@@ -60,8 +60,8 @@
 #' @param pkg_version Host package version, used in the tool version;
 #'   default: read from the package `DESCRIPTION` next to the spec, falling
 #'   back to the installed package.
-#' @param biocjobs_version BiocJobs version, retained for reproducibility of
-#'   the generated header.
+#' @param biocjobs_version BiocJobs version written into the provenance
+#'   comment.
 #' @param profile Galaxy tool profile version.
 #' @param image Container image for the tool's `<container>` requirement;
 #'   defaults to the job's `container` field, then to the current
@@ -123,12 +123,6 @@ galaxyTool <- function(job, pkg_version = NULL, biocjobs_version = NULL,
     xrefs <- xml2::xml_add_child(doc, "xrefs")
     xml2::xml_add_child(xrefs, "xref", job$package, type = "bioconductor")
 
-    ## The container is the entry way for every target, Galaxy included: it
-    ## is the one environment definition that is identical across Galaxy,
-    ## TES, Nextflow, WDL and HTCondor, so a job runs the same everywhere.
-    ## Bioconda package requirements are deliberately not emitted for now --
-    ## they would describe a second, separately-resolved environment, and
-    ## BiocJobs is not on bioconda yet.
     image <- image %||% job$container %||% .defaultContainer()
     reqs <- xml2::xml_add_child(doc, "requirements")
     xml2::xml_add_child(reqs, "container", image, type = "docker")
@@ -345,7 +339,7 @@ galaxyTool <- function(job, pkg_version = NULL, biocjobs_version = NULL,
 #'
 #' Writes the tool XML and, when `job` is supplied and declares tests,
 #' stages the referenced test files into a `test-data/` directory next to
-#' the XML — the layout Galaxy's test framework and `planemo test` require.
+#' the XML, the layout Galaxy's test framework and `planemo test` require.
 #'
 #' @param doc An `xml2::xml_document`, as produced by
 #'   [galaxyTool()].

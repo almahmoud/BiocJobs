@@ -4,8 +4,8 @@
 #' of work ("jobs") it can perform, and generates from each declaration
 #' everything workflow infrastructure needs to dispatch it: GA4GH Task
 #' Execution Service (TES) tasks, Galaxy tool wrappers, Nextflow DSL2
-#' modules, WDL tasks, a machine-readable manifest, and -- through the
-#' BiocExecute framework -- a command line.
+#' modules, WDL tasks, HTCondor submit files, Kubernetes Jobs and a
+#' machine-readable manifest.
 #'
 #' A job is two files under `inst/biocjobs/`: a YAML specification declaring
 #' inputs, outputs, typed options, resources, dependencies, citations and
@@ -25,9 +25,10 @@
 #'     [jobParams()], [execJob()],
 #'     [runJob()], [jobCommand()].
 #'   \item Generators:
-#'     [tesTask()], [galaxyTool()],
-#'     [nextflowModule()],
-#'     [wdlTask()], [jobManifest()].
+#'     [tesTask()], [writeTesTask()], [galaxyTool()],
+#'     [writeGalaxyTool()], [nextflowModule()],
+#'     [wdlTask()], [htcondorSubmit()], [kubernetesJob()],
+#'     [writeKubernetesJob()], [jobManifest()].
 #'   \item Command line: [biocjobsCLI()].
 #' }
 #'

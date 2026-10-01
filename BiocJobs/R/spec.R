@@ -88,7 +88,7 @@ readJob <- function(path, validate = TRUE) {
 #'
 #' jobs[["toy-normalize"]]
 #'
-#' ## Packages that declare no jobs simply return an empty list.
+#' ## Packages that declare no jobs return an empty list.
 #' length(findJobs(tempdir()))
 #' @export
 findJobs <- function(pkg = ".", validate = TRUE) {
@@ -155,9 +155,7 @@ jobScript <- function(job) {
     list(severity = severity, message = message)
 }
 
-## Issue collector.  validateJob() runs many independent checks and each may
-## contribute zero or more issues, so the accumulator has to outlive the
-## expression that appends to it.  A small environment carries it explicitly.
+## Issues collected by validateJob()'s checks.
 .newIssues <- function() {
     collector <- new.env(parent = emptyenv())
     assign("issues", list(), envir = collector)
@@ -396,7 +394,7 @@ validateJob <- function(job) {
 #' * `tests`: declared test cases.
 #' * `_path`: normalised path of the YAML file.
 #'
-#' `format()` and `print()` summarise the interface.
+#' `print()` summarises the interface.
 #'
 #' @name BiocJob
 #' @return A `BiocJob` is a named list with the elements above; this page

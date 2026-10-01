@@ -21,7 +21,7 @@ staging.  Test file paths are resolved against the host package root.}
 \description{
 Writes the tool XML and, when \code{job} is supplied and declares tests,
 stages the referenced test files into a \verb{test-data/} directory next to
-the XML — the layout Galaxy's test framework and \verb{planemo test} require.
+the XML, the layout Galaxy's test framework and \verb{planemo test} require.
 }
 \examples{
 toy <- system.file("examples", "toy", package = "BiocJobs")

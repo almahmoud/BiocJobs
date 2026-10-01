@@ -23,11 +23,11 @@ commands:
   htcondor <pkg> <job> [--out FILE]    generate an HTCondor submit file
   kubernetes <pkg> <job> [--out FILE] [--image REF] [--claim PVC]
                                        generate a Kubernetes Job (YAML)
+  run      <pkg> <job> [--workdir DIR] [--<param> <value> ...]
+                                       run a job locally
 
 --image overrides the container declared in the specification; every
 generator accepts it.
-  run      <pkg> <job> [--workdir DIR] [--<param> <value> ...]
-                                       run a job locally
 
 <pkg> is a package source directory, an installed package directory, or an
 installed package name.
@@ -35,14 +35,14 @@ installed package name.
 
 #' BiocJobs command line interface
 #'
-#' Entry point for shell-driven use; see the package README for the command
-#' reference.  Exits the R session with a non-zero status on failure when
-#' run non-interactively.
+#' Entry point for shell-driven use; `biocjobsCLI("help")` prints the
+#' command reference.  Exits the R session with a non-zero status on
+#' failure when run non-interactively.
 #'
 #' @param args Command-line arguments; defaults to
 #'   `commandArgs(trailingOnly = TRUE)`.
-#' @return Exits the process when non-interactive; otherwise returns
-#'   invisibly.
+#' @return The exit status (0 or 1), invisibly, in an interactive session;
+#'   otherwise quits R with that status.
 #' @examples
 #' ## The CLI exists for shells and build infrastructure; from R, call the
 #' ## same functions it dispatches to.

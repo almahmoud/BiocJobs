@@ -35,7 +35,7 @@ paths are created.
 ## In a real job script this is the first line, and `args` comes from
 ## the command line.  Here the arguments are supplied explicitly, and
 ## the specification of the (uninstalled) toy package is pointed at with
-## BIOCJOBS_SPEC -- exactly the development workflow runJob() automates.
+## BIOCJOBS_SPEC, as runJob() does.
 toy <- system.file("examples", "toy", package = "BiocJobs")
 yaml <- file.path(toy, "inst", "biocjobs", "toy-normalize.yaml")
 

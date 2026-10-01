@@ -28,6 +28,6 @@ names(jobs)
 
 jobs[["toy-normalize"]]
 
-## Packages that declare no jobs simply return an empty list.
+## Packages that declare no jobs return an empty list.
 length(findJobs(tempdir()))
 }

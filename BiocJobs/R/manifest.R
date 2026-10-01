@@ -3,7 +3,7 @@
 ## The manifest is the aggregation unit for build infrastructure: for each
 ## package it enumerates every declared job with its full interface, so a
 ## registry of dispatchable jobs across all of Bioconductor can be built by
-## concatenating per-package manifests — no package installation or code
+## concatenating per-package manifests; no package installation or code
 ## evaluation required.
 
 #' Build a job manifest for a package

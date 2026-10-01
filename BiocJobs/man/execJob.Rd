@@ -18,7 +18,7 @@ layer, bypassing command-line parsing.}
 Invisibly, the value of the sourced script.
 }
 \description{
-The canonical entry point used by generated TES tasks and Galaxy wrappers.
+The entry point every generated artifact runs.
 Locates the job's script inside the installed host package and runs it.
 Command-line arguments after the \code{-e} expression are consumed by the
 script's \code{jobParams()} call.
@@ -29,9 +29,8 @@ BiocExecute/Rapp application generated from the job specification) can
 hand its parameter values over directly via \code{values}; the script's
 \code{jobParams()} call then uses them instead of re-parsing
 \code{commandArgs()}.
-Values of \code{NULL}, \code{NA} or \code{""} count as "not
-supplied", so defaults and required-parameter checks behave exactly
-as on the command line.
+Values of \code{NULL} or \code{NA} count as not supplied, so defaults and
+required-parameter checks behave as for absent command-line flags.
 }
 \examples{
 ## execJob() normally resolves the script inside the *installed* host

@@ -32,9 +32,7 @@ By default the module follows the nf-core convention: the job's
 file inputs travel together in one \verb{tuple val(meta), path(...)}
 input led by a \code{meta} map, every output is emitted as
 \verb{tuple val(meta), path(...)} so that map flows on to the next
-process, and the process \code{tag} is \verb{$\{meta.id\}}.  Nextflow shows the
-tag of the most recently launched job for a process, so it has to
-identify the unit of work rather than repeat the process name.
+process, and the process \code{tag} is \verb{$\{meta.id\}}.
 Passing \code{meta = FALSE} emits plain \code{path} inputs and tags with the
 first input file's name instead, for pipelines without meta maps.
 }

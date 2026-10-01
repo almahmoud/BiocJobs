@@ -12,8 +12,8 @@
 ## Supplied-values channel: a CLI layer (e.g. a BiocExecute/Rapp app
 ## generated from the job specification) that has already parsed the command
 ## line hands its values to the next jobParams() call via execJob(values =).
-## Values equal to NULL, NA or "" mean "not supplied", so defaults and
-## required-checks behave exactly as they do for absent command-line flags.
+## NULL and NA mean "not supplied", so defaults and required checks behave
+## as for absent command-line flags.
 .biocjobs_state <- new.env(parent = emptyenv())
 
 .setSuppliedValues <- function(values) {
@@ -36,13 +36,8 @@
     else NULL
 }
 
-## Active-spec channel: execJob() has already resolved the specification it
-## is about to run, and the script it sources calls jobParams() for the same
-## package/job.  Handing the resolved spec over in-process keeps the two
-## resolutions identical without touching the process environment (which
-## would leak into unrelated child processes).  The BIOCJOBS_SPEC
-## environment variable remains the documented cross-process channel; see
-## .locateSpec().
+## Active-spec channel: execJob() hands the spec it resolved to the
+## jobParams() call in the script it sources.
 .setActiveSpec <- function(spec) {
     if (is.null(spec)) {
         if (exists("spec", envir = .biocjobs_state))
@@ -83,7 +78,7 @@
 #' ## In a real job script this is the first line, and `args` comes from
 #' ## the command line.  Here the arguments are supplied explicitly, and
 #' ## the specification of the (uninstalled) toy package is pointed at with
-#' ## BIOCJOBS_SPEC -- exactly the development workflow runJob() automates.
+#' ## BIOCJOBS_SPEC, as runJob() does.
 #' toy <- system.file("examples", "toy", package = "BiocJobs")
 #' yaml <- file.path(toy, "inst", "biocjobs", "toy-normalize.yaml")
 #'

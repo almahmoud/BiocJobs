@@ -4,9 +4,9 @@
 #'
 #' Creates `inst/biocjobs/<name>.yaml` and
 #' `inst/biocjobs/scripts/<name>.R` in a package source tree, pre-filled
-#' with a commented template that
-#' demonstrates every specification field and the `jobParams()` script
-#' contract.  Nothing is overwritten unless `overwrite = TRUE`.
+#' with a commented template of the common specification fields and the
+#' `jobParams()` script contract.  Nothing is overwritten unless
+#' `overwrite = TRUE`.
 #'
 #' @param name Job name (`[a-z0-9][a-z0-9._-]*`).
 #' @param pkg Path to the package source directory (must contain

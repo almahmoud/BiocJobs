@@ -45,8 +45,8 @@ Produces a \code{batch/v1} Job manifest.  An init container per input
 downloads it with \code{curl} into a volume shared with the job container,
 which runs the canonical \code{BiocJobs::execJob()} command with inputs under
 \verb{<workdir>/inputs} and outputs under \verb{<workdir>/outputs}.  A required
-input without a URL, and a required option without a value, is emitted
-as a \code{{{...}}} placeholder, as in \code{\link[=tesTask]{tesTask()}}, and the Job is then
+input without a URL and a required option without a value are emitted
+as \code{{{...}}} placeholders, as in \code{\link[=tesTask]{tesTask()}}, and the Job is then
 annotated \code{biocjobs.template: "true"}.  An optional input without a URL
 is left out.
 }

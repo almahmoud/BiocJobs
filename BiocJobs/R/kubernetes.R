@@ -80,8 +80,8 @@
 #' downloads it with `curl` into a volume shared with the job container,
 #' which runs the canonical `BiocJobs::execJob()` command with inputs under
 #' `<workdir>/inputs` and outputs under `<workdir>/outputs`.  A required
-#' input without a URL, and a required option without a value, is emitted
-#' as a `{{...}}` placeholder, as in [tesTask()], and the Job is then
+#' input without a URL and a required option without a value are emitted
+#' as `{{...}}` placeholders, as in [tesTask()], and the Job is then
 #' annotated `biocjobs.template: "true"`.  An optional input without a URL
 #' is left out.
 #'

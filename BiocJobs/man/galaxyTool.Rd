@@ -19,8 +19,8 @@ galaxyTool(
 default: read from the package \code{DESCRIPTION} next to the spec, falling
 back to the installed package.}
 
-\item{biocjobs_version}{BiocJobs version, retained for reproducibility of
-the generated header.}
+\item{biocjobs_version}{BiocJobs version written into the provenance
+comment.}
 
 \item{profile}{Galaxy tool profile version.}
 

@@ -4,10 +4,10 @@
 ## inputs become a single nf-core style `tuple val(meta), path(...)` input,
 ## options become `val` inputs, outputs are emitted under stable names
 ## carrying `meta` through, and resources map to process directives.  The
-## script
-## block runs the same self-locating `Rscript -e 'BiocJobs::execJob(...)'`
-## command used by every other target, and a stub block makes the module
-## testable with `nextflow run -stub` in environments without R.
+## script block runs the same self-locating
+## `Rscript -e 'BiocJobs::execJob(...)'` command used by every other target,
+## and a stub block makes the module testable with `nextflow run -stub` in
+## environments without R.
 
 .nextflowProcessName <- function(job) {
     name <- toupper(gsub("[^A-Za-z0-9_]", "_", as.character(job$name)))
@@ -52,9 +52,7 @@
 #' file inputs travel together in one `tuple val(meta), path(...)`
 #' input led by a `meta` map, every output is emitted as
 #' `tuple val(meta), path(...)` so that map flows on to the next
-#' process, and the process `tag` is `${meta.id}`.  Nextflow shows the
-#' tag of the most recently launched job for a process, so it has to
-#' identify the unit of work rather than repeat the process name.
+#' process, and the process `tag` is `${meta.id}`.
 #' Passing `meta = FALSE` emits plain `path` inputs and tags with the
 #' first input file's name instead, for pipelines without meta maps.
 #'
@@ -123,9 +121,6 @@ nextflowModule <- function(job, image = NULL, file = NULL,
         sprintf("// %s (%s)", .oneline(e$label %||% e$name), note)
     }
 
-    ## nf-core convention: the file inputs of one analysis unit travel in a
-    ## single tuple led by a `meta` map, outputs carry that map back out, and
-    ## the tag names the sample rather than the process.
     if (meta) {
         in_comments <- c(
             "// meta: map identifying the unit of work; meta.id names the tag",
@@ -163,8 +158,6 @@ nextflowModule <- function(job, image = NULL, file = NULL,
     )
     script[length(script)] <- sub(" \\\\\\\\$", "", script[length(script)])
 
-    ## The tag identifies the unit of work in Nextflow's progress output, so
-    ## it must vary per sample, not per process.
     tag <- if (meta) {
         "${meta.id}"
     } else if (length(job$inputs)) {

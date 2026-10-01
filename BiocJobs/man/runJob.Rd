@@ -34,7 +34,7 @@ be exercised straight from a package source checkout.
 }
 \examples{
 ## The development loop: edit the script, run it against real data,
-## straight from the source checkout -- nothing needs to be installed.
+## straight from the source checkout; nothing needs to be installed.
 toy <- system.file("examples", "toy", package = "BiocJobs")
 job <- readJob(file.path(toy, "inst", "biocjobs", "toy-normalize.yaml"))
 

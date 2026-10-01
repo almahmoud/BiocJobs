@@ -36,7 +36,7 @@ image.
 \item \verb{_path}: normalised path of the YAML file.
 }
 
-\code{format()} and \code{print()} summarise the interface.
+\code{print()} summarises the interface.
 }
 \examples{
 toy <- system.file("examples", "toy", package = "BiocJobs")

@@ -10,8 +10,8 @@ BiocJobs lets a package declare, inside itself, the non-interactive units
 of work ("jobs") it can perform, and generates from each declaration
 everything workflow infrastructure needs to dispatch it: GA4GH Task
 Execution Service (TES) tasks, Galaxy tool wrappers, Nextflow DSL2
-modules, WDL tasks, a machine-readable manifest, and -- through the
-BiocExecute framework -- a command line.
+modules, WDL tasks, HTCondor submit files, Kubernetes Jobs and a
+machine-readable manifest.
 }
 \details{
 A job is two files under \verb{inst/biocjobs/}: a YAML specification declaring
@@ -32,9 +32,10 @@ Key entry points:
 \code{\link[=jobParams]{jobParams()}}, \code{\link[=execJob]{execJob()}},
 \code{\link[=runJob]{runJob()}}, \code{\link[=jobCommand]{jobCommand()}}.
 \item Generators:
-\code{\link[=tesTask]{tesTask()}}, \code{\link[=galaxyTool]{galaxyTool()}},
-\code{\link[=nextflowModule]{nextflowModule()}},
-\code{\link[=wdlTask]{wdlTask()}}, \code{\link[=jobManifest]{jobManifest()}}.
+\code{\link[=tesTask]{tesTask()}}, \code{\link[=writeTesTask]{writeTesTask()}}, \code{\link[=galaxyTool]{galaxyTool()}},
+\code{\link[=writeGalaxyTool]{writeGalaxyTool()}}, \code{\link[=nextflowModule]{nextflowModule()}},
+\code{\link[=wdlTask]{wdlTask()}}, \code{\link[=htcondorSubmit]{htcondorSubmit()}}, \code{\link[=kubernetesJob]{kubernetesJob()}},
+\code{\link[=writeKubernetesJob]{writeKubernetesJob()}}, \code{\link[=jobManifest]{jobManifest()}}.
 \item Command line: \code{\link[=biocjobsCLI]{biocjobsCLI()}}.
 }
 }
