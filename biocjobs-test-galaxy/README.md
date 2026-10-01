@@ -1,6 +1,6 @@
 # biocjobs-test-galaxy
 
-Tool wrappers for the Bioc jobs test Galaxy at https://testgalaxy.bioconductor.org.
+Tool wrappers for the BiocJobs test Galaxy at https://testgalaxy.bioconductor.org.
 
 Open a pull request that adds a wrapper. A maintainer deploys it to the test Galaxy,
 where you can run it without signing in (two jobs at a time, 5 GB of storage).
@@ -39,20 +39,3 @@ Maintainers with write access comment on the pull request:
 
 New commits remove a deployed pull request until it is deployed again. Deployed pull
 requests have the `deployed` label.
-
-## Setup
-
-With cluster admin credentials:
-
-```bash
-cd biocjobs-test-galaxy
-kubectl apply -f deploy/namespace-setup.yaml
-deploy/make-kubeconfig.sh
-gh api -X PUT repos/{owner}/{repo}/environments/testgalaxy
-gh secret set KUBECONFIG --env testgalaxy < galaxy-deployer.kubeconfig
-rm galaxy-deployer.kubeconfig
-```
-
-Galaxy settings are in [deploy/values.yaml](deploy/values.yaml). Settings missing from
-that file return to the chart defaults on the next deploy. To redeploy without a change,
-run the **Deploy to test instance** workflow.
