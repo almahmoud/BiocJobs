@@ -276,6 +276,11 @@ validateJob <- function(job) {
                     "^[a-z][a-z0-9_]*$ (got '", e$name %||% "", "')")
             if (is.null(e$format))
                 add("error", what, ": missing 'format'")
+            else if (!.isToken(as.character(e$format),
+                               "^[A-Za-z0-9][A-Za-z0-9._-]*$"))
+                add("error", what, ": 'format' must match ",
+                    "^[A-Za-z0-9][A-Za-z0-9._-]*$ (got '",
+                    paste(e$format, collapse = " "), "')")
             else if (!.formatInfo(e$format)$known)
                 add("note", what, ": format '", e$format,
                     "' is not in jobFormats(); it is passed through verbatim")

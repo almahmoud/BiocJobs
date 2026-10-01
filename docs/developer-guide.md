@@ -162,8 +162,9 @@ inputs:
 ```
 
 Run `BiocJobs::jobFormats()` for the format vocabulary (`tsv`, `csv`,
-`rds`, `fasta`, `fastq`, `bam`, `vcf`, `pdf`, ...). Unknown formats are
-allowed (they pass through verbatim to generators), but validation flags
+`rds`, `fasta`, `fastq`, `bam`, `vcf`, `pdf`, ...). Unknown formats made of
+letters, digits, `.`, `_` and `-` are allowed (they pass through verbatim
+to generators), but validation flags
 them as notes so typos get caught.
 
 ### `outputs`: files the job must produce

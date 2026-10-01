@@ -178,3 +178,17 @@ test_that("readJob does not evaluate !expr tags", {
     job <- readJob(path, validate = FALSE)
     expect_type(job$extra, "character")
 })
+
+test_that("validateJob rejects a format that is not a plain token", {
+    errors_of <- function(spec) {
+        issues <- validateJob(as_job(spec))
+        errors <- vapply(issues, `[[`, "", "severity") == "error"
+        vapply(issues, `[[`, "", "message")[errors]
+    }
+    spec <- toy_spec_list()
+    spec$outputs[[1L]]$format <- "tsv\nexecutable = /bin/sh"
+    expect_true(any(startsWith(errors_of(spec),
+                               "output 'normalized': 'format' must match")))
+    spec$outputs[[1L]]$format <- "tsv.gz"
+    expect_length(errors_of(spec), 0L)
+})

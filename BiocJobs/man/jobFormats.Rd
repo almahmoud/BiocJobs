@@ -13,9 +13,9 @@ and \code{description}.
 \description{
 BiocJobs uses a small controlled vocabulary of file format names in job
 specifications.  Each format maps to a Galaxy datatype and a default file
-extension.  Unknown formats are allowed (they pass through verbatim as the
-Galaxy datatype and extension) but \code{validateJob()} reports them as notes so
-typos are caught.
+extension.  Unknown formats made of letters, digits, \code{.}, \verb{_} and \code{-} are
+allowed (they pass through verbatim as the Galaxy datatype and extension)
+but \code{validateJob()} reports them as notes so typos are caught.
 }
 \examples{
 formats <- jobFormats()
