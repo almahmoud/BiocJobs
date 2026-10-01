@@ -348,7 +348,8 @@ galaxyTool <- function(job, pkg_version = NULL, biocjobs_version = NULL,
 #'   [galaxyTool()].
 #' @param file Output path (conventionally `<tool_id>.xml`).
 #' @param job The `BiocJob` the tool was generated from; enables test-data
-#'   staging.  Test file paths are resolved against the host package root.
+#'   staging.  Test file paths are resolved against the host package root;
+#'   symbolic links and files outside the package are not staged.
 #' @return `file`, invisibly.
 #' @examples
 #' toy <- system.file("examples", "toy", package = "BiocJobs")
@@ -369,6 +370,7 @@ writeGalaxyTool <- function(doc, file, job = NULL) {
     xml2::write_xml(doc, file)
     if (!is.null(job) && length(job$tests)) {
         root <- .specPkgRoot(job)
+        base <- paste0(normalizePath(root %||% ".", winslash = "/"), "/")
         dest <- file.path(dirname(file), "test-data")
         for (tc in job$tests) {
             files <- c(unlist(tc$inputs),
@@ -378,6 +380,14 @@ writeGalaxyTool <- function(doc, file, job = NULL) {
                 src <- if (!is.null(root)) file.path(root, f) else f
                 if (!file.exists(src)) {
                     warning("test file not staged (not found): ", src)
+                    next
+                }
+                ## test-data/ is published with the tool, so it must hold
+                ## nothing from outside the package.
+                if (isTRUE(nzchar(Sys.readlink(src))) ||
+                    !startsWith(normalizePath(src, winslash = "/"), base)) {
+                    warning("test file not staged (symbolic link or outside ",
+                            "the package): ", src)
                     next
                 }
                 if (!dir.exists(dest))

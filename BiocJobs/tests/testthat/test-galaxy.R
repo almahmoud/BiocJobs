@@ -138,6 +138,32 @@ test_that("the tool carries a provenance header", {
     expect_match(txt, "Do not edit", fixed = TRUE)
 })
 
+test_that("symbolic links and files outside the package are not staged", {
+    skip_on_os("windows")
+    parent <- tempfile("stage_")
+    dir.create(parent)
+    file.copy(toy_pkg(), parent, recursive = TRUE)
+    pkg <- file.path(parent, "toy")
+    writeLines("x", file.path(parent, "outside.txt"))
+    file.symlink(file.path(parent, "outside.txt"),
+                 file.path(pkg, "test-data", "link.tsv"))
+    job <- readJob(file.path(pkg, "inst", "biocjobs", "toy-normalize.yaml"))
+    job$tests[[1L]]$inputs$matrix <- "../outside.txt"
+    job$tests[[1L]]$outputs$normalized$file <- "test-data/link.tsv"
+    out <- file.path(tempfile("stageout_"), "tool.xml")
+    dir.create(dirname(out))
+    warnings <- character()
+    withCallingHandlers(
+        writeGalaxyTool(galaxyTool(job, image = "img"), out, job = job),
+        warning = function(w) {
+            warnings <<- c(warnings, conditionMessage(w))
+            invokeRestart("muffleWarning")
+        })
+    expect_length(warnings, 2L)
+    expect_true(all(startsWith(warnings, "test file not staged")))
+    expect_length(list.files(file.path(dirname(out), "test-data")), 0L)
+})
+
 test_that("allow_chars may not include a single quote", {
     spec <- toy_spec_list()
     spec$options[[4L]] <- list(name = "design", type = "string",

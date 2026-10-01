@@ -13,7 +13,8 @@ writeGalaxyTool(doc, file, job = NULL)
 \item{file}{Output path (conventionally \verb{<tool_id>.xml}).}
 
 \item{job}{The \code{BiocJob} the tool was generated from; enables test-data
-staging.  Test file paths are resolved against the host package root.}
+staging.  Test file paths are resolved against the host package root;
+symbolic links and files outside the package are not staged.}
 }
 \value{
 \code{file}, invisibly.
