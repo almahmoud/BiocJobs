@@ -19,7 +19,7 @@ jobs:
 ```
 
 Without a `dockerfile` input the action builds its own image: the package,
-every dependency in its DESCRIPTION and BiocJobs, on
+every dependency in its DESCRIPTION and BiocJobs at the action's ref, on
 `ghcr.io/bioconductor/bioconductor` at the branch's Bioconductor version.
 Supply `dockerfile` for anything else; it must produce an image with R, the
 package and BiocJobs installed.

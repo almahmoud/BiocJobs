@@ -10,9 +10,12 @@ RUN Rscript -e 'options(Ncpus = parallel::detectCores()); \
                 BiocManager::install("remotes", ask = FALSE, update = FALSE); \
                 remotes::install_deps("/tmp/pkg", dependencies = TRUE, upgrade = FALSE)'
 
-# Until BiocJobs is on Bioconductor. The archive download avoids the GitHub
-# API rate limit that install_github() hits on shared runners.
-RUN Rscript -e 'remotes::install_url("https://github.com/almahmoud/BiocJobs/archive/HEAD.tar.gz", subdir = "BiocJobs", upgrade = FALSE)'
+# Until BiocJobs is on Bioconductor. The action passes its own ref, so the
+# image gets the BiocJobs of the action version in use. The archive download
+# avoids the GitHub API rate limit that install_github() hits on shared
+# runners.
+ARG BIOCJOBS_REF=HEAD
+RUN Rscript -e 'remotes::install_url(paste0("https://github.com/almahmoud/BiocJobs/archive/", Sys.getenv("BIOCJOBS_REF"), ".tar.gz"), subdir = "BiocJobs", upgrade = FALSE)'
 
 # The source is bind-mounted rather than copied, so it stays out of the image.
 RUN --mount=type=bind,target=/tmp/src,rw \
