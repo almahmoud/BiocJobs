@@ -138,6 +138,18 @@ test_that("the tool carries a provenance header", {
     expect_match(txt, "Do not edit", fixed = TRUE)
 })
 
+test_that("allow_chars may not include a single quote", {
+    spec <- toy_spec_list()
+    spec$options[[4L]] <- list(name = "design", type = "string",
+                               default = "~ x", label = "Design",
+                               allow_chars = list("~", "'"))
+    issues <- validateJob(as_job(spec))
+    errors <- vapply(issues, `[[`, "", "message")[
+        vapply(issues, `[[`, "", "severity") == "error"]
+    expect_true(any(grepl("'allow_chars' must not include", errors)))
+    expect_error(galaxyTool(as_job(spec)), "must not include a single quote")
+})
+
 test_that("the CLI --image flag overrides the declared container", {
     skip_on_cran()
     dir <- tempfile("cliimg_"); dir.create(dir)

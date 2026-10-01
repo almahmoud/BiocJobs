@@ -310,6 +310,9 @@ validateJob <- function(job) {
         }
         if (is.null(o$default) && !isTRUE(o$required))
             add("error", what, ": needs either a 'default' or 'required: true'")
+        if (any(grepl("'", as.character(unlist(o$allow_chars)), fixed = TRUE)))
+            add("error", what, ": 'allow_chars' must not include a single ",
+                "quote")
         if (is.null(o$label))
             add("note", what, ": no 'label'")
     }

@@ -239,6 +239,11 @@ galaxyTool <- function(job, pkg_version = NULL, biocjobs_version = NULL,
             ## Permit characters beyond Galaxy's conservative default text
             ## sanitizer (e.g. '~' in R formulas), as declared in the spec.
             if (length(o$allow_chars)) {
+                ## The command passes string values inside single quotes.
+                if (any(grepl("'", as.character(unlist(o$allow_chars)),
+                              fixed = TRUE)))
+                    stop("option '", o$name, "': 'allow_chars' must not ",
+                         "include a single quote")
                 san <- xml2::xml_add_child(n, "sanitizer",
                                            invalid_char = "")
                 valid <- xml2::xml_add_child(san, "valid",

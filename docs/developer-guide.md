@@ -224,6 +224,8 @@ Rules:
   default text sanitizer strips characters like `~`, which would silently
   corrupt `~ condition` into `condition`. Declaring
   `allow_chars: ["~"]` makes the generated wrapper extend the sanitizer.
+  A single quote is not allowed: the Galaxy command passes string values
+  inside single quotes.
 - Booleans arrive in your script as R logicals; integers as integers;
   floats as doubles; choice values are validated against `choices` before
   your script sees them.
