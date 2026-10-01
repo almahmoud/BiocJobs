@@ -206,18 +206,10 @@ runJob <- function(job, params = list(), workdir = tempfile("biocjob_"),
             params[[e$name]] <- normalizePath(v)
     }
 
-    ## Run the script directly (not via execJob) so an uninstalled source
-    ## checkout works; jobParams() picks the spec up from the environment.
+    ## Run the script directly so an uninstalled source checkout works;
+    ## jobParams() finds the spec through BIOCJOBS_SPEC.
     script <- jobScript(job)
-    argv <- character()
-    for (name in names(params)) {
-        value <- params[[name]]
-        if (is.null(value))
-            next
-        if (isTRUE(value))  value <- "true"
-        if (isFALSE(value)) value <- "false"
-        argv <- c(argv, paste0("--", name), as.character(value))
-    }
+    argv <- jobCommand(job, params)[-seq_len(3L)]
 
     owd <- setwd(workdir)
     on.exit(setwd(owd), add = TRUE)

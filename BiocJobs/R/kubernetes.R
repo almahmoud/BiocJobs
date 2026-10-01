@@ -43,22 +43,6 @@
              "; declared: ", paste(known, collapse = ", "))
 }
 
-## Values for the canonical command: paths under `workdir` for files, and
-## supplied values, defaults or placeholders for options.
-.containerParams <- function(job, options, workdir) {
-    params <- list()
-    for (e in job$inputs)
-        params[[e$name]] <- file.path(workdir, "inputs",
-                                      .defaultFileName(e$name, e$format))
-    for (e in job$outputs)
-        params[[e$name]] <- file.path(workdir, "outputs",
-                                      .defaultFileName(e$name, e$format))
-    for (o in job$options)
-        params[[o$name]] <- options[[o$name]] %||% o$default %||%
-            sprintf("{{options.%s}}", o$name)
-    params
-}
-
 .kubernetesResources <- function(res) {
     requests <- list(
         cpu = if (!is.null(res$cpus)) .quantity(res$cpus),

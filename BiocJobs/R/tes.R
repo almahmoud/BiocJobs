@@ -21,6 +21,22 @@
            gsub(".", "_", release, fixed = TRUE))
 }
 
+## Values for the canonical command: paths under `workdir` for files, and
+## supplied values, defaults or placeholders for options.
+.containerParams <- function(job, options, workdir) {
+    params <- list()
+    for (e in job$inputs)
+        params[[e$name]] <- file.path(workdir, "inputs",
+                                      .defaultFileName(e$name, e$format))
+    for (e in job$outputs)
+        params[[e$name]] <- file.path(workdir, "outputs",
+                                      .defaultFileName(e$name, e$format))
+    for (o in job$options)
+        params[[o$name]] <- options[[o$name]] %||% o$default %||%
+            sprintf("{{options.%s}}", o$name)
+    params
+}
+
 #' Generate a GA4GH TES task from a job
 #'
 #' Produces a TES v1.1 `tesTask` structure ready to POST to a TES
@@ -109,20 +125,7 @@ tesTask <- function(job, inputs = character(), outputs = character(),
         )
     })
 
-    ## Parameter values for the canonical command: container-side paths for
-    ## files, supplied values / defaults / placeholders for options.
-    params <- list()
-    for (e in job$inputs)
-        params[[e$name]] <- file.path(in_dir,
-                                      .defaultFileName(e$name, e$format))
-    for (e in job$outputs)
-        params[[e$name]] <- file.path(out_dir,
-                                      .defaultFileName(e$name, e$format))
-    for (o in job$options) {
-        v <- options[[o$name]] %||% o$default %||%
-            sprintf("{{options.%s}}", o$name)
-        params[[o$name]] <- v
-    }
+    params <- .containerParams(job, options, workdir)
 
     resources <- list()
     if (!is.null(job$resources$cpus))
