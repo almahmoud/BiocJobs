@@ -73,12 +73,8 @@ jobs:
           kubeconform -v
 
       - name: Regenerate every artifact of the worked example
-        # The compiled CLI (exec/DESeq2.R, written by
-        # BiocExecute::execCompile()) is deliberately NOT regenerated here:
-        # it needs the BiocExecute feat/biocjobs-specs branch, which is not
-        # on a release repository. Regenerate it by hand when the job
-        # interface changes, following examples/DESeq2/README.md. The
-        # generators below are pure BiocJobs.
+        # exec/DESeq2.R is written by BiocExecute::execCompile() and is not
+        # regenerated here.
         run: |
           Rscript -e 'BiocJobs::biocjobsCLI()' validate "$EXAMPLE"
           Rscript -e 'BiocJobs::biocjobsCLI()' tes      "$EXAMPLE" "$JOB" \
