@@ -307,7 +307,6 @@ galaxyTool <- function(job, pkg_version = NULL, biocjobs_version = NULL,
 
 ## reStructuredText help section.
 .galaxyHelp <- function(job) {
-    para <- function(...) paste0(..., "\n")
     txt <- c(
         "",
         paste0("**", job$title, "**"),

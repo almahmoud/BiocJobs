@@ -82,7 +82,7 @@
 
 ## Help line for parameter_meta: label, help, and constraints the WDL type
 ## system cannot express (choices, bounds, file format).
-.wdlHelp <- function(e, kind = c("input", "output", "option")) {
+.wdlHelp <- function(e, kind = c("input", "option")) {
     kind <- match.arg(kind)
     parts <- c(e$label %||% e$name, .oneline(e$help %||% ""))
     if (kind != "option")

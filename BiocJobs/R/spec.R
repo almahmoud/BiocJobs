@@ -425,5 +425,3 @@ print.BiocJob <- function(x, ...) {
                   collapse = ", "), "\n")
     invisible(x)
 }
-
-`%||%` <- function(a, b) if (is.null(a)) b else a
