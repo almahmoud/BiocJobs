@@ -25,8 +25,7 @@ toy_matrix_file <- function(dir = tempfile("toydata_")) {
     path
 }
 
-## Deep-copy the toy job spec as a plain list for mutation-based
-## validation tests.
+## The toy spec as a plain list, for tests that modify it.
 toy_spec_list <- function() {
     unclass(toy_job())
 }

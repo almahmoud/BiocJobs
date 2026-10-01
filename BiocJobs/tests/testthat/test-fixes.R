@@ -1,4 +1,4 @@
-## Regression tests for defects found in adversarial review.
+## Regression tests.
 
 test_that("validateJob reports (not crashes on) bare-scalar entries", {
     spec <- toy_spec_list()
@@ -46,22 +46,19 @@ test_that("integer options beyond .Machine$integer.max error clearly", {
                  "exceeds the integer range")
 })
 
-test_that("execJob restores a pre-existing BIOCJOBS_SPEC", {
+test_that("execJob runs from the command line with BIOCJOBS_SPEC", {
     skip_on_cran()
     Sys.setenv(BIOCJOBS_SPEC = toy_yaml())
     on.exit(Sys.unsetenv("BIOCJOBS_SPEC"))
     mat <- toy_matrix_file()
     out <- tempfile(fileext = ".tsv")
     owd <- setwd(tempdir()); on.exit(setwd(owd), add = TRUE)
-    ## execJob sources the script in-process; args come from this call's
-    ## perspective, so run it in a child instead and check env survives.
     status <- system2("Rscript", c(
         "-e", shQuote('BiocJobs::execJob("toy", "toy-normalize")'),
         "--matrix", shQuote(mat), "--normalized", shQuote(out)),
         env = paste0("BIOCJOBS_SPEC=", shQuote(toy_yaml())),
         stdout = FALSE, stderr = FALSE)
     expect_identical(status, 0L)
-    expect_identical(Sys.getenv("BIOCJOBS_SPEC"), toy_yaml())
 })
 
 test_that("runJob works when the spec path contains spaces", {

@@ -97,22 +97,20 @@ test_that("jobSkeleton scaffolds a valid, runnable declaration", {
     expect_error(jobSkeleton("my-analysis", pkg = pkg), "already exists")
 })
 
-test_that("empty string round-trips through the supplied-values channel", {
-    Sys.setenv(BIOCJOBS_SPEC = toy_yaml())
-    on.exit({ Sys.unsetenv("BIOCJOBS_SPEC"); BiocJobs:::.setSuppliedValues(NULL) })
-    mat <- toy_matrix_file()
-    ## An option that legitimately takes "" must receive it, not the default.
-    spec <- readJob(toy_yaml())
-    BiocJobs:::.setSuppliedValues(list(matrix = mat, method = "none"))
-    params <- jobParams("toy", "toy-normalize")
-    expect_identical(params$method, "none")
+test_that("an empty string is a value, not an unset marker", {
+    spec <- toy_spec_list()
+    spec$options[[4L]] <- list(name = "suffix", type = "string", default = "x")
+    BiocJobs:::.setActiveSpec(as_job(spec))
+    on.exit({
+        BiocJobs:::.setActiveSpec(NULL)
+        BiocJobs:::.setSuppliedValues(NULL)
+    })
+    BiocJobs:::.setSuppliedValues(list(matrix = toy_matrix_file(), suffix = ""))
+    expect_identical(jobParams("toy", "toy-normalize")$suffix, "")
 })
 
-test_that("nested execJob does not leak the outer job's supplied values", {
+test_that("jobParams consumes supplied values once", {
     skip_on_cran()
-    ## The channel is consumed by the first jobParams() and restored on exit,
-    ## so a job whose script calls execJob() again cannot clobber it. We
-    ## approximate by checking consume-then-empty semantics directly.
     Sys.setenv(BIOCJOBS_SPEC = toy_yaml())
     on.exit({ Sys.unsetenv("BIOCJOBS_SPEC"); BiocJobs:::.setSuppliedValues(NULL) })
     mat <- toy_matrix_file()
