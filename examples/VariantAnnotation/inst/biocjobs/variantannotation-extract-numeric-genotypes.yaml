@@ -10,12 +10,12 @@ description: >
   Imports a BED file indicating regions to output, as well as a plain text file
   listing samples to include. Then uses VariantAnnotation to import the GT
   matrix from the indexed VCF. Only variants that pass filtering are retained.
-  Outputs a tab-delimited text containing chromsome, position, reference and
+  Outputs a tab-delimited text containing chromosome, position, reference and
   alternative alleles, and genotypes expressed as alternative allele count.
 version: "1.0.0"
 license: MIT
 script: scripts/variantannotation-extract-numeric-genotypes.R
-depends: []   # runtime deps beyond the host package (shrinkage)
+depends: []   # runtime deps beyond the host package
 
 inputs:
   - name: vcf

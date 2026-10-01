@@ -5,7 +5,7 @@ Description: Annotate variants, compute amino acid coding changes,
         predict coding outcomes.
 Version: 1.59.3
 Authors@R: c(
-        person("Valerie", "Oberchain", role="aut"),
+        person("Valerie", "Obenchain", role="aut"),
         person("Martin", "Morgan", role="aut"),
         person("Michael", "Lawrence", role="aut"),
         person("Stephanie", "Gogarten", role="ctb"),
