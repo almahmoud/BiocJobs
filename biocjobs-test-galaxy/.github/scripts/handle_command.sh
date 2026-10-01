@@ -32,7 +32,7 @@ case "${command:-}" in
   /help)
     reply "| Command | |
 |---|---|
-| \`/deploy <sha>\` | Deploy this pull request at commit \`<sha>\` to $galaxy_url. \`<sha>\` must be the current head. |
+| \`/deploy <sha>\` | Deploy this pull request at commit \`<sha>\` to $galaxy_url. \`<sha>\` is the full 40-character hash of the current head. |
 | \`/undeploy\` | Remove this pull request's tools from the test instance. |
 | \`/help\` | Show this list. |
 
@@ -71,14 +71,14 @@ if [ "$command" = "/undeploy" ]; then
   exit 0
 fi
 
-if [ -n "${extra:-}" ] || ! [[ "${argument:-}" =~ ^[0-9a-f]{7,40}$ ]]; then
+if [ -n "${extra:-}" ] || ! [[ "${argument:-}" =~ ^[0-9a-f]{40}$ ]]; then
   react "confused"
-  reply "Usage: \`/deploy <sha>\`. The head of this pull request is \`${head:0:12}\`."
+  reply "Usage: \`/deploy <sha>\` with the full 40-character commit hash. The head of this pull request is \`$head\`."
   exit 0
 fi
-if [[ "$head" != "$argument"* ]]; then
+if [ "$head" != "$argument" ]; then
   react "confused"
-  reply "\`$argument\` is not the head of this pull request. The head is \`${head:0:12}\`."
+  reply "\`$argument\` is not the head of this pull request. The head is \`$head\`."
   exit 0
 fi
 

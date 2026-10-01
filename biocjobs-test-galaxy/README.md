@@ -33,7 +33,7 @@ Maintainers with write access comment on the pull request:
 
 | Command | |
 |---|---|
-| `/deploy <sha>` | Deploy the pull request at commit `<sha>`, which must be its latest commit. |
+| `/deploy <sha>` | Deploy the pull request at commit `<sha>`, the full 40-character hash of its latest commit. |
 | `/undeploy` | Remove the pull request's tools from the test Galaxy. |
 | `/help` | List the commands. |
 
