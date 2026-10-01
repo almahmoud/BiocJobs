@@ -9,6 +9,22 @@
 ## and sources it; the script's own `jobParams()` call then parses the
 ## trailing arguments.  No absolute paths ever appear in generated artifacts.
 
+## The -e expression of the canonical command.  Generators paste it into
+## shell, Groovy, WDL and Cheetah text, so the package and job must be plain
+## names even when the job was never validated.
+.execExpr <- function(job) {
+    if (!.isToken(job$package, "^[A-Za-z][A-Za-z0-9.]*$"))
+        stop("'package' must be an R package name (got '",
+             paste(job$package, collapse = " "), "')")
+    if (!.isToken(job$name, "^[a-z0-9][a-z0-9._-]*$"))
+        stop("'name' must match ^[a-z0-9][a-z0-9._-]*$ (got '",
+             paste(job$name, collapse = " "), "')")
+    sprintf('BiocJobs::execJob("%s", "%s")', job$package, job$name)
+}
+
+.isToken <- function(x, pattern)
+    is.character(x) && length(x) == 1L && !is.na(x) && grepl(pattern, x)
+
 #' Execute a job from an installed package
 #'
 #' The entry point every generated artifact runs.
@@ -116,8 +132,7 @@ jobCommand <- function(job, params = list(), rscript = "Rscript",
     argv <- if (identical(style, "cli")) {
         c(job$package, cliJobName(job))
     } else {
-        c(rscript, "-e",
-          sprintf('BiocJobs::execJob("%s", "%s")', job$package, job$name))
+        c(rscript, "-e", .execExpr(job))
     }
     for (name in names(params)) {
         value <- params[[name]]

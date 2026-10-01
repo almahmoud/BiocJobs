@@ -165,8 +165,7 @@ wdlTask <- function(job, image = NULL, file = NULL) {
             sprintf("    --%s %s \\", o$name, .wdlSquote(v))
     }
     cmd <- c(
-        sprintf("Rscript -e 'BiocJobs::execJob(\"%s\", \"%s\")' \\",
-                job$package, job$name),
+        sprintf("Rscript -e '%s' \\", .execExpr(job)),
         vapply(job$inputs, function(e) {
             v <- .wdlVar(e$name)
             if (isFALSE(e$required))

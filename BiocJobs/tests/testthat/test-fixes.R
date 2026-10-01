@@ -150,3 +150,21 @@ test_that("jobManifest on a jobless package reads DESCRIPTION", {
     expect_identical(m$version, "2.5.1")
     expect_length(m$jobs, 0L)
 })
+
+test_that("generators refuse package and job names that are not plain names", {
+    spec <- toy_spec_list()
+    spec$package <- 'toy"); system("id'
+    job <- as_job(spec)
+    msg <- "'package' must be an R package name"
+    expect_error(jobCommand(job), msg, fixed = TRUE)
+    expect_error(galaxyTool(job, image = "img"), msg, fixed = TRUE)
+    expect_error(nextflowModule(job, image = "img"), msg, fixed = TRUE)
+    expect_error(wdlTask(job, image = "img"), msg, fixed = TRUE)
+    expect_error(htcondorSubmit(job, image = "img"), msg, fixed = TRUE)
+    expect_error(tesTask(job, image = "img"), msg, fixed = TRUE)
+    expect_error(kubernetesJob(job, image = "img"), msg, fixed = TRUE)
+
+    spec <- toy_spec_list()
+    spec$name <- "toy'; id #"
+    expect_error(jobCommand(as_job(spec)), "'name' must match", fixed = TRUE)
+})

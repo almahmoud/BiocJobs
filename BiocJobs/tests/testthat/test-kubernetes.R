@@ -247,15 +247,15 @@ test_that("the kubernetes CLI command honours --out, --image and --claim", {
 })
 
 test_that("label values and the header cannot carry other characters", {
+    expect_identical(BiocJobs:::.labelValue("toy\n---\nkind: Secret"),
+                     "toy-----kind--Secret")
     job <- toy_job()
     job$package <- "toy\n---\nkind: Secret"
-    k8s <- kubernetesJob(job, image = "img")
-    expect_identical(k8s$metadata$labels$biocjobs.package,
-                     "toy-----kind--Secret")
-    text <- writeKubernetesJob(k8s)
+    expect_error(kubernetesJob(job, image = "img"),
+                 "'package' must be an R package name", fixed = TRUE)
+    text <- writeKubernetesJob(kubernetesJob(toy_job(), image = "img"))
     lines <- strsplit(text, "\n", fixed = TRUE)[[1L]]
     expect_true(all(startsWith(lines[1:3], "# ")))
-    expect_false(any(startsWith(lines, "---")))
     expect_identical(yaml::yaml.load(text)$kind, "Job")
 })
 

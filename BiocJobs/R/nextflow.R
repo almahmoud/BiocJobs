@@ -147,8 +147,7 @@ nextflowModule <- function(job, image = NULL, file = NULL,
     ## Values are quoted with embedded single quotes escaped, so a path
     ## or option value containing a quote cannot break the shell.
     script <- c(
-        sprintf("Rscript -e 'BiocJobs::execJob(\"%s\", \"%s\")' \\\\",
-                job$package, job$name),
+        sprintf("Rscript -e '%s' \\\\", .execExpr(job)),
         vapply(job$inputs, function(e)
             sprintf("    --%s %s \\\\", e$name, .nfSquote(.nfVar(e$name))), ""),
         vapply(job$options, function(o)

@@ -107,8 +107,7 @@ htcondorSubmit <- function(job, image = NULL, file = NULL,
     flag <- function(name, value)
         sprintf("    --%s %s \\", name, .shSquote(value))
     cmd <- c(
-        sprintf("Rscript -e 'BiocJobs::execJob(\"%s\", \"%s\")' \\",
-                job$package, job$name),
+        sprintf("Rscript -e '%s' \\", .execExpr(job)),
         vapply(job$inputs, function(e) flag(e$name, file_of(e)), ""),
         vapply(job$options, function(o) {
             v <- options[[o$name]] %||% o$default %||%

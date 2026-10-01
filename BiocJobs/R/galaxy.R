@@ -182,8 +182,7 @@ galaxyTool <- function(job, pkg_version = NULL, biocjobs_version = NULL,
 ## The Cheetah command block: the canonical invocation with one
 ## `--name '$name'` pair per declared parameter, one per line.
 .galaxyCommand <- function(job) {
-    lines <- c(sprintf("Rscript -e 'BiocJobs::execJob(\"%s\", \"%s\")'",
-                       job$package, job$name))
+    lines <- sprintf("Rscript -e '%s'", .execExpr(job))
     quote_val <- function(name, quoted = TRUE) {
         if (quoted) sprintf("--%s '$%s'", name, name)
         else sprintf("--%s $%s", name, name)
