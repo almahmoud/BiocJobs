@@ -3,24 +3,22 @@
 // regenerate with: Rscript -e 'BiocJobs::biocjobsCLI()' nextflow <pkg> variantannotation-extract-numeric-genotypes
 
 process VARIANTANNOTATION_EXTRACT_NUMERIC_GENOTYPES {
-    tag "variantannotation-extract-numeric-genotypes"
+    tag "${meta.id}"
     container 'bioconductor/bioconductor_docker:RELEASE_3_23'
     cpus 1
     memory '16 GB'
     disk '10 GB'
 
     input:
-    // VCF (variant call format) file (vcf.bgz)
-    path vcf
-    // TBI tabix index for VCF (tbi)
-    path index
-    // BED file of regions to include (bed)
-    path bed
-    // File listing samples to include (txt)
-    path samples
+    // meta: map identifying the unit of work; meta.id names the tag
+    // vcf: VCF (variant call format) file (vcf.bgz)
+    // index: TBI tabix index for VCF (tbi)
+    // bed: BED file of regions to include (bed)
+    // samples: File listing samples to include (txt)
+    tuple val(meta), path(vcf), path(index), path(bed), path(samples)
 
     output:
-    path 'numeric_genotypes.tsv.gz', emit: numeric_genotypes
+    tuple val(meta), path('numeric_genotypes.tsv.gz'), emit: numeric_genotypes
 
     script:
     """

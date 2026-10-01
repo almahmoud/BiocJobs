@@ -6,7 +6,7 @@
     {
       "name": "variantannotation-extract-numeric-genotypes",
       "title": "Extract numeric genotypes from a VCF",
-      "description": "Imports a BED file indicating regions to output, as well as a plain text file listing samples to include. Then uses VariantAnnotation to import the GT matrix from the indexed VCF. Only variants that pass filtering are retained. Outputs a tab-delimited text containing chromsome, position, reference and alternative alleles, and genotypes expressed as alternative allele count.\n",
+      "description": "Imports a BED file indicating regions to output, as well as a plain text file listing samples to include. Then uses VariantAnnotation to import the GT matrix from the indexed VCF. Only variants that pass filtering are retained. Outputs a tab-delimited text containing chromosome, position, reference and alternative alleles, and genotypes expressed as alternative allele count.\n",
       "version": "1.0.0",
       "script": "scripts/variantannotation-extract-numeric-genotypes.R",
       "inputs": [

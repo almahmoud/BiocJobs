@@ -41,7 +41,7 @@ task variantannotation_extract_numeric_genotypes {
     }
 
     meta {
-        description: "Imports a BED file indicating regions to output, as well as a plain text file listing samples to include. Then uses VariantAnnotation to import the GT matrix from the indexed VCF. Only variants that pass filtering are retained. Outputs a tab-delimited text containing chromsome, position, reference and alternative alleles, and genotypes expressed as alternative allele count."
+        description: "Imports a BED file indicating regions to output, as well as a plain text file listing samples to include. Then uses VariantAnnotation to import the GT matrix from the indexed VCF. Only variants that pass filtering are retained. Outputs a tab-delimited text containing chromosome, position, reference and alternative alleles, and genotypes expressed as alternative allele count."
         biocjobs_package: "VariantAnnotation"
         biocjobs_job: "variantannotation-extract-numeric-genotypes"
         biocjobs_job_version: "1.0.0"
