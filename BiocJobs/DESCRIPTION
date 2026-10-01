@@ -6,12 +6,12 @@ Authors@R: c(
            email = "almahmoudresearch@gmail.com",
            role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3779-492X")))
-Description: A lightweight framework for Bioconductor package developers to
+Description: A framework for Bioconductor package developers to
     declare non-interactive, dispatchable units of work ("jobs") inside their
     packages. A job is an R script plus a YAML specification of its inputs,
     outputs, configuration options, and resource requirements, shipped under
     inst/biocjobs/. BiocJobs discovers and validates these specifications, runs
-    jobs locally, and automatically generates execution artifacts for
+    jobs locally, and generates execution artifacts for
     workflow infrastructure: GA4GH Task Execution Service (TES) task
     definitions, Galaxy tool wrappers, Nextflow DSL2 modules, Workflow
     Description Language (WDL) tasks, HTCondor submit files and Kubernetes

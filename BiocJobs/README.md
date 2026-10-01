@@ -23,7 +23,8 @@ BiocManager::install("almahmoud/BiocJobs", subdir = "BiocJobs")
 
 ```r
 library(BiocJobs)
-jobSkeleton("my-analysis", pkg = ".")      # writes inst/biocjobs/my-analysis.{yaml,R}
+jobSkeleton("my-analysis", pkg = ".")
+# writes inst/biocjobs/my-analysis.yaml and inst/biocjobs/scripts/my-analysis.R
 ```
 
 Edit the two files, then from a shell:
