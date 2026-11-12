@@ -8,7 +8,7 @@ FROM ${BASE_IMAGE}
 COPY DESCRIPTION /tmp/pkg/DESCRIPTION
 RUN Rscript -e 'options(Ncpus = parallel::detectCores()); \
                 BiocManager::install("remotes", ask = FALSE, update = FALSE); \
-                remotes::install_deps("/tmp/pkg", dependencies = TRUE, upgrade = FALSE)'
+                remotes::install_deps("/tmp/pkg", dependencies = TRUE, upgrade = FALSE, repos = BiocManager::repositories())'
 
 # Until BiocJobs is on Bioconductor. The action passes its own ref, so the
 # image gets the BiocJobs of the action version in use. The archive download

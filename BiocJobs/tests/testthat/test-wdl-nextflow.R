@@ -38,7 +38,7 @@ test_that("nextflowModule renders a complete process", {
     expect_match(text, "process TOY_NORMALIZE \\{")
     expect_match(text, "container 'example/image:1'", fixed = TRUE)
     ## nf-core style: file inputs in one meta-led tuple, outputs carry meta.
-    expect_match(text, "tuple val(meta), path(matrix)", fixed = TRUE)
+    expect_match(text, "tuple val(meta), path(matrix, name: 'matrix.tsv')", fixed = TRUE)
     expect_match(text, "val method", fixed = TRUE)
     expect_match(text, "tuple val(meta), path('normalized.tsv'), emit: normalized",
                  fixed = TRUE)
@@ -96,7 +96,7 @@ test_that("WDL escapes shell metacharacters and placeholder introducers", {
 
 test_that("meta = FALSE emits plain paths and tags the first input file", {
     text <- nextflowModule(toy_job(), image = "x/y:1", meta = FALSE)
-    expect_match(text, "path matrix", fixed = TRUE)
+    expect_match(text, "path matrix, name: 'matrix.tsv'", fixed = TRUE)
     expect_match(text, "path 'normalized.tsv', emit: normalized", fixed = TRUE)
     expect_match(text, "tag \"${matrix.name}\"", fixed = TRUE)
     expect_false(grepl("meta", text, fixed = TRUE))

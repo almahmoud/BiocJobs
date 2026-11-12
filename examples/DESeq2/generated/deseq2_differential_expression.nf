@@ -13,7 +13,7 @@ process DESEQ2_DIFFERENTIAL_EXPRESSION {
     // meta: map identifying the unit of work; meta.id names the tag
     // counts: Raw count matrix (tsv)
     // coldata: Sample table (tsv)
-    tuple val(meta), path(counts), path(coldata)
+    tuple val(meta), path(counts, name: 'counts.tsv'), path(coldata, name: 'coldata.tsv')
     // Design formula (string; default in spec: ~ condition)
     val design
     // Factor to test (string; required)

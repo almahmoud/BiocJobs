@@ -15,7 +15,7 @@ process VARIANTANNOTATION_EXTRACT_NUMERIC_GENOTYPES {
     // index: TBI tabix index for VCF (tbi)
     // bed: BED file of regions to include (bed)
     // samples: File listing samples to include (txt)
-    tuple val(meta), path(vcf), path(index), path(bed), path(samples)
+    tuple val(meta), path(vcf, name: 'vcf.vcf.bgz'), path(index, name: 'index.tbi'), path(bed, name: 'bed.bed'), path(samples, name: 'samples.txt')
 
     output:
     tuple val(meta), path('numeric_genotypes.tsv.gz'), emit: numeric_genotypes

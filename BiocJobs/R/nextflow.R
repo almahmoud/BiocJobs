@@ -53,6 +53,9 @@
 #' input led by a `meta` map, every output is emitted as
 #' `tuple val(meta), path(...)` so that map flows on to the next
 #' process, and the process `tag` is `${meta.id}`.
+#' Input files are staged (symlinked) into the work directory as
+#' `<input name>.<format extension>`, e.g. `counts.tsv`, whatever their
+#' original file names.
 #' Passing `meta = FALSE` emits plain `path` inputs and tags with the
 #' first input file's name instead, for pipelines without meta maps.
 #'
@@ -100,6 +103,10 @@ nextflowModule <- function(job, image = NULL, file = NULL,
     image <- image %||% job$container %||% .defaultContainer()
     proc <- .nextflowProcessName(job)
     out_file <- function(e) .defaultFileName(e$name, e$format)
+    ## Inputs are staged under a fixed <option>.<format> name rather than
+    ## their original file name.
+    nf_path <- function(e, sep)
+        sprintf("path%s%s, name: '%s'", sep, .nfVar(e$name), out_file(e))
 
     comment_for <- function(e, kind) {
         note <- if (identical(kind, "option")) {
@@ -129,7 +136,8 @@ nextflowModule <- function(job, image = NULL, file = NULL,
                         .oneline(e$label %||% e$name), e$format), ""))
         tuple_parts <- c("val(meta)",
                          vapply(job$inputs, function(e)
-                             sprintf("path(%s)", .nfVar(e$name)), ""))
+                             sprintf("path(%s, name: '%s')", .nfVar(e$name),
+                                     out_file(e)), ""))
         inputs <- c(in_comments,
                     paste0("tuple ", paste(tuple_parts, collapse = ", ")))
         outputs <- vapply(job$outputs, function(e)
@@ -137,7 +145,7 @@ nextflowModule <- function(job, image = NULL, file = NULL,
                     out_file(e), e$name), "")
     } else {
         inputs <- unlist(lapply(job$inputs, function(e)
-            c(comment_for(e, "input"), sprintf("path %s", .nfVar(e$name)))))
+            c(comment_for(e, "input"), nf_path(e, " "))))
         outputs <- vapply(job$outputs, function(e)
             sprintf("path '%s', emit: %s", out_file(e), e$name), "")
     }

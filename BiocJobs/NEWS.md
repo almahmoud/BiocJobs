@@ -16,6 +16,8 @@
   submit files (`htcondorSubmit()`) and Kubernetes `batch/v1` Jobs
   (`kubernetesJob()`, `writeKubernetesJob()`), plus a per-package job
   manifest (`jobManifest()`) for registry aggregation.
+* Nextflow modules stage each input file as `<input option>.<format>`
+  (via `name:`) instead of reusing its original file name.
 * `jobSkeleton()` scaffolds a new job declaration from a template.
 * Command-line interface (`biocjobsCLI()`) exposing discovery, validation,
   local runs and every generator for use in automation.
